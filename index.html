@@ -99,23 +99,11 @@
         
         <!-- PESTAÑA 1: RENDIMIENTO INDUSTRIAL -->
         <section id="tab1" class="tab-content active">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
                     <p class="text-xs text-slate-500 font-bold uppercase">Rendimiento Industrial</p>
                     <h3 class="text-2xl font-black text-slate-800 mt-1" id="kpi-rendimiento">0%</h3>
                     <p class="text-xs text-slate-400 mt-1" id="kpi-rendimiento-sub">Proc / Recibido</p>
-                </div>
-                <!-- KPI 2: CALIDAD FÍSICA (FRESCO Y SANO) -->
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Fresco y Sano Promedio</p>
-                    <h3 class="text-2xl font-black text-emerald-600 mt-1" id="kpi-fresco">0%</h3>
-                    <p class="text-xs text-slate-400 mt-1" id="kpi-fresco-sub">0 lbs aptas Clase A (&ge;60%)</p>
-                </div>
-                <!-- KPI 3: MERMA / BASURA EN RECEPCIÓN -->
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Merma / Basura en Recepción</p>
-                    <h3 class="text-2xl font-black text-amber-600 mt-1" id="kpi-basura">0%</h3>
-                    <p class="text-xs text-slate-400 mt-1" id="kpi-basura-sub">0 lbs descartadas en recepción</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
                     <p class="text-xs text-slate-500 font-bold uppercase">Libras Procesadas Totales</p>
@@ -180,7 +168,6 @@
                                 <th>Camaronera Oficial</th>
                                 <th>Piscina</th>
                                 <th>Libras Proc.</th>
-                                <th>% Fresco y Sano</th>
                                 <th>Metabisulfito</th>
                                 <th class="bg-emerald-800 text-white">Sabor Caract. %</th>
                                 <!-- SABORES CONSOLIDADOS (SOLO ENTERO) -->
@@ -210,7 +197,7 @@
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200">
                     <h2 class="text-lg font-bold text-slate-800 uppercase">Ranking Oficial de Camaroneras y Proveedores</h2>
-                    <p class="text-xs text-slate-500">Ordenado por % Promedio Fresco y Sano</p>
+                    <p class="text-xs text-slate-500">Ordenado por % Clase A y Volumen Procesado</p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full gerencial-table">
@@ -220,7 +207,6 @@
                                 <th>Camaronera Oficial</th>
                                 <th>Lotes</th>
                                 <th>Libras Proc.</th>
-                                <th>% Prom. Fresco</th>
                                 <th>% Clase A</th>
                                 <th>% Talla</th>
                                 <th>% Clase C</th>
@@ -749,13 +735,13 @@
                 document.getElementById('filter-summary').innerText = `Mostrando ${data.length} de ${db.consolidado.length} lotes`;
 
                 if(data.length === 0) {
-                    document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="20" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
+                    document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="19" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
                     document.getElementById('tbody-ranking').innerHTML = '';
                     document.getElementById('tbody-ranking-sabores').innerHTML = '';
                     return; 
                 }
                 
-                // --- PESTAÑA 1: RENDIMIENTO Y NUEVOS KPIs ---
+                // --- PESTAÑA 1: RENDIMIENTO ---
                 let totalRecibidas = data.reduce((a,b)=>a+b.Libras_Recibidas, 0);
                 let totalProcesadas = data.reduce((a,b)=>a+b.Libras_Procesadas, 0);
                 let totalRechazo = data.reduce((a,b)=>a+b.Rechazo, 0);
@@ -768,22 +754,7 @@
                 
                 let rndIndustrial = totalRecibidas > 0 ? (totalProcesadas/totalRecibidas)*100 : 0;
 
-                // KPI 2: % Fresco y Sano Ponderado
-                let sumFrescoPonderado = data.reduce((a,b)=> a + (b.Perc_Fresco * b.Libras_Procesadas), 0);
-                let frescoPromedio = totalProcesadas > 0 ? (sumFrescoPonderado / totalProcesadas) : 0;
-                let lbsAptasFresco = data.filter(d => d.Perc_Fresco >= 60).reduce((a,b)=> a + b.Libras_Procesadas, 0);
-
-                // KPI 3: Merma / Basura en Recepción (%)
-                let pctBasuraTotal = totalRecibidas > 0 ? (totalBasura / totalRecibidas) * 100 : 0;
-
                 document.getElementById('kpi-rendimiento').innerText = rndIndustrial.toFixed(1) + "%";
-                
-                document.getElementById('kpi-fresco').innerText = frescoPromedio.toFixed(1) + "%";
-                document.getElementById('kpi-fresco-sub').innerText = lbsAptasFresco.toLocaleString('en-US', {maximumFractionDigits:0}) + " lbs con Fresco ≥60%";
-                
-                document.getElementById('kpi-basura').innerText = pctBasuraTotal.toFixed(2) + "%";
-                document.getElementById('kpi-basura-sub').innerText = totalBasura.toLocaleString('en-US', {maximumFractionDigits:0}) + " lbs descartadas en recepción";
-
                 document.getElementById('kpi-procesadas').innerText = totalProcesadas.toLocaleString('en-US', {maximumFractionDigits:0});
                 document.getElementById('kpi-valor').innerText = "Valor Liq: $" + totalValor.toLocaleString('en-US', {maximumFractionDigits:0});
 
@@ -894,10 +865,9 @@
                     </tr>
                 `;
 
-                // TABLA 2: MAPA DE CALOR (SABORES CONSOLIDADOS EN ENTERO + BRANQUIAS SEPARADAS)
+                // TABLA 2: MAPA DE CALOR (SIN COLUMNA FRESCO Y SANO)
                 let arrLotes = [...data].sort((a,b) => b.Libras_Procesadas - a.Libras_Procesadas);
                 document.getElementById('tbody-calor').innerHTML = arrLotes.map(d => {
-                    let fr = d.Perc_Fresco || 0;
                     let meta = d.Perc_Meta || 0;
                     let mlf = d.Mancha_Leve + d.Mancha_Fuerte || 0;
                     let bac = d.Bact_Leve || 0;
@@ -907,7 +877,6 @@
                     let pC = d.Libras_Procesadas > 0 ? (d.Clases.C / d.Libras_Procesadas) * 100 : 0;
                     let pD = d.Libras_Procesadas > 0 ? (d.Clases.D / d.Libras_Procesadas) * 100 : 0;
                     
-                    let badgeFr = fr >= 60 ? 'badge-green' : (fr >= 46 ? 'badge-yellow' : 'badge-red');
                     let colorA = pA >= 50 ? 'text-emerald-600' : (pA >= 20 ? 'text-emerald-500' : 'text-slate-600');
                     let colorB = pB >= 20 ? 'text-amber-600' : 'text-slate-600';
                     let colorC = pC > 0 ? 'text-rose-600' : 'text-slate-600';
@@ -923,7 +892,6 @@
                         <td class="font-semibold">${d.Camaronera_Oficial}</td>
                         <td>${d.Piscina}</td>
                         <td class="font-mono">${d.Libras_Procesadas.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
-                        <td><span class="${badgeFr}">${fr.toFixed(1)}%</span></td>
                         <td class="font-mono text-slate-700">${meta.toFixed(1)}</td>
                         <td class="bg-emerald-50/50 font-bold text-emerald-700">${(d.Sabor_Caract || 0).toFixed(1)}%</td>
                         <td class="${combStyle}">${d.Comb_Entero_Total.toFixed(1)}%</td>
@@ -941,14 +909,13 @@
                     </tr>`;
                 }).join('');
 
-                // --- PESTAÑA 3: RANKING GENERAL ---
+                // --- PESTAÑA 3: RANKING GENERAL (SIN COLUMNA % PROM. FRESCO) ---
                 let provs = {};
                 data.forEach(d => {
                     let p = d.Camaronera_Oficial || "Desconocida";
-                    if(!provs[p]) provs[p] = { lotes:0, lbsProc:0, fSum:0, a:0, b:0, c:0, d:0, rej:0 };
+                    if(!provs[p]) provs[p] = { lotes:0, lbsProc:0, a:0, b:0, c:0, d:0, rej:0 };
                     provs[p].lotes++;
                     provs[p].lbsProc += d.Libras_Procesadas;
-                    provs[p].fSum += (d.Perc_Fresco * d.Libras_Procesadas);
                     provs[p].a += d.Clases.A; 
                     provs[p].b += d.Clases.B; 
                     provs[p].c += d.Clases.C;
@@ -969,10 +936,12 @@
 
                     return { 
                         nombre: k, lotes: o.lotes, lbs: o.lbsProc, 
-                        fresco: o.lbsProc > 0 ? (o.fSum/o.lbsProc) : 0, 
                         pa: pa, pb: pb, pc: pc, pd: pd, pr: pr
                     };
-                }).sort((a,b)=> b.fresco - a.fresco);
+                }).sort((a,b) => {
+                    if (Math.abs(b.pa - a.pa) > 0.05) return b.pa - a.pa;
+                    return b.lbs - a.lbs;
+                });
 
                 document.getElementById('tbody-ranking').innerHTML = rankArr.map((r, i) => `
                     <tr class="hover:bg-slate-50">
@@ -980,7 +949,6 @@
                         <td class="font-bold">${r.nombre}</td>
                         <td>${r.lotes}</td>
                         <td class="font-mono">${r.lbs.toLocaleString('en-US', {maximumFractionDigits:0})} lb</td>
-                        <td class="font-bold text-emerald-700">${r.fresco.toFixed(2)}%</td>
                         <td class="text-emerald-600 font-bold">${r.pa.toFixed(1)}%</td>
                         <td class="text-amber-500 font-bold">${r.pb.toFixed(1)}%</td>
                         <td class="text-rose-500 font-bold">${r.pc.toFixed(1)}%</td>
