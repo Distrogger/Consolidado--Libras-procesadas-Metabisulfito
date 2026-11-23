@@ -18,12 +18,12 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .tab-btn.active { border-bottom: 2px solid #0f172a; color: #0f172a; font-weight: 600; }
-        .gerencial-table th { background-color: #1e293b; color: white; padding: 12px; text-align: left; font-size: 0.85rem; text-transform: uppercase; }
-        .gerencial-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-        .badge-green { background-color: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.8rem; }
-        .badge-yellow { background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.8rem; }
-        .badge-red { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.8rem; }
+        .tab-btn.active { border-bottom: 2px solid #0f172a; color: #0f172a; font-weight: 700; }
+        .gerencial-table th { background-color: #1e293b; color: white; padding: 10px 12px; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+        .gerencial-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; }
+        .badge-green { background-color: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.78rem; }
+        .badge-yellow { background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.78rem; }
+        .badge-red { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.78rem; }
         .bar-composition { display: flex; height: 12px; border-radius: 6px; overflow: hidden; width: 100%; min-width: 100px; background-color: #e2e8f0;}
         .bar-a { background-color: #10b981; }
         .bar-b { background-color: #f59e0b; }
@@ -34,12 +34,12 @@
 </head>
 <body class="text-slate-800">
 
-    <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+    <header class="bg-white shadow-sm px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-50">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Análisis de Calidad y Rendimiento Industrial</h1>
-            <p class="text-sm text-slate-500">Integración: Liquidación (OMIPROD), Defectos, Organoléptico y Branquias</p>
+            <p class="text-sm text-slate-500">Integración: Liquidación (OMIPROD), Defectos, Organoléptico, Sabores y Branquias</p>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
             <label class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md cursor-pointer text-sm transition font-semibold">
                 <i class="fa-solid fa-upload mr-2"></i> Cargar CSVs Locales
                 <input type="file" id="fileInput" multiple accept=".csv" class="hidden">
@@ -52,33 +52,53 @@
         <ul class="flex gap-6 text-sm text-slate-500 min-w-max">
             <li><button class="tab-btn active py-4 hover:text-slate-800 transition" onclick="openTab(event, 'tab1')">1. Rendimiento Industrial y Rechazo</button></li>
             <li><button class="tab-btn py-4 hover:text-slate-800 transition" onclick="openTab(event, 'tab2')">2. Matriz Organoléptica y Lotes</button></li>
-            <li><button class="tab-btn py-4 hover:text-slate-800 transition" onclick="openTab(event, 'tab3')">3. Ranking de Proveedores</button></li>
+            <li><button class="tab-btn py-4 hover:text-slate-800 transition" onclick="openTab(event, 'tab3')">3. Ranking General de Proveedores</button></li>
+            <li><button class="tab-btn py-4 hover:text-indigo-700 text-indigo-600 transition flex items-center gap-1.5" onclick="openTab(event, 'tab4')"><i class="fa-solid fa-flask-vial"></i> 4. Análisis de Sabores y Combustible</button></li>
         </ul>
     </nav>
 
+    <!-- BARRA DE FILTROS GLOBALES (FECHAS Y CAMARONERA) -->
+    <div class="bg-slate-100 border-b border-slate-200 px-6 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-end gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1"><i class="fa-regular fa-calendar mr-1"></i> Llegada Desde</label>
+                <input type="date" id="filterFechaDesde" onchange="renderDashboard()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-slate-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1"><i class="fa-regular fa-calendar-check mr-1"></i> Llegada Hasta</label>
+                <input type="date" id="filterFechaHasta" onchange="renderDashboard()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-slate-500">
+            </div>
+            <div class="min-w-[200px]">
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Camaronera Oficial</label>
+                <select id="filterCamaronera" onchange="renderDashboard()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm w-full text-slate-700">
+                    <option value="ALL">Todas las Camaroneras</option>
+                </select>
+            </div>
+            <div class="min-w-[160px]">
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Categoría (Clase)</label>
+                <select id="filterClase" onchange="renderDashboard()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm w-full text-slate-700">
+                    <option value="ALL">Todas las Clases</option>
+                    <option value="A">Clase A</option>
+                    <option value="B">Talla (B)</option>
+                    <option value="C">Clase C</option>
+                    <option value="D">Clase D (Combustible)</option>
+                </select>
+            </div>
+            <div>
+                <button onclick="resetFilters()" class="bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 rounded text-sm font-semibold transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Limpiar Filtros
+                </button>
+            </div>
+            <div class="ml-auto text-xs text-slate-500 self-center font-medium" id="filter-summary">
+                Mostrando todos los lotes
+            </div>
+        </div>
+    </div>
+
     <main class="p-6 max-w-7xl mx-auto">
         
-        <!-- PESTAÑA 1 -->
+        <!-- PESTAÑA 1: RENDIMIENTO INDUSTRIAL -->
         <section id="tab1" class="tab-content active">
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-                 <div class="w-full md:w-1/4">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Filtrar por Camaronera</label>
-                    <select id="filterCamaronera" onchange="renderDashboard()" class="border border-slate-300 rounded px-3 py-2 text-sm w-full">
-                        <option value="ALL">Todas</option>
-                    </select>
-                </div>
-                <div class="w-full md:w-1/4">
-                     <label class="block text-sm font-medium text-slate-700 mb-1">Filtrar por Categoría (Clase)</label>
-                    <select id="filterClase" onchange="renderDashboard()" class="border border-slate-300 rounded px-3 py-2 text-sm w-full">
-                        <option value="ALL">Todas</option>
-                        <option value="A">Clase A</option>
-                        <option value="B">Talla</option>
-                        <option value="C">Clase C</option>
-                        <option value="D">Clase D</option>
-                    </select>
-                </div>
-            </div>
-
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
                     <p class="text-xs text-slate-500 font-bold uppercase">Rendimiento Industrial</p>
@@ -114,7 +134,7 @@
             </div>
         </section>
 
-        <!-- PESTAÑA 2 -->
+        <!-- PESTAÑA 2: MATRIZ ORGANOLÉPTICA Y LOTES -->
         <section id="tab2" class="tab-content">
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden mb-6">
                 <div class="p-4 border-b border-slate-200">
@@ -133,9 +153,7 @@
                                 <th>Volumen Actual Procesado</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-matriz">
-                            <!-- Generado por JS -->
-                        </tbody>
+                        <tbody id="tbody-matriz"></tbody>
                     </table>
                 </div>
             </div>
@@ -144,28 +162,35 @@
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800">MAPA DE CALOR POR LOTE, CAMARONERA Y PISCINA</h2>
-                        <p class="text-xs text-slate-500">Desglose individual de defectos, sabores limitantes y branquias por lote</p>
+                        <p class="text-xs text-slate-500">Desglose individual de defectos, sabores a combustible (CML/CL/CF/Cola), tierra y branquias por lote</p>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto">
-                        <input type="text" id="searchCalor" onkeyup="filterCalorTable()" placeholder="Buscar Lote o Proveedor..." class="border border-slate-300 rounded px-3 py-2 text-sm w-full">
+                        <input type="text" id="searchCalor" onkeyup="filterCalorTable()" placeholder="Buscar Lote, Fecha o Proveedor..." class="border border-slate-300 rounded px-3 py-2 text-sm w-full">
                         <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-bold transition whitespace-nowrap"><i class="fa-solid fa-download mr-2"></i>Exportar CSV</button>
                     </div>
                 </div>
-                <div class="overflow-x-auto h-[500px]">
+                <div class="overflow-x-auto h-[550px]">
                     <table class="w-full gerencial-table relative whitespace-nowrap" id="table-calor">
                         <thead class="sticky top-0 shadow-sm z-10">
                             <tr>
                                 <th>Lote</th>
+                                <th>Fecha Llegada</th>
                                 <th>Camaronera Oficial</th>
                                 <th>Piscina</th>
                                 <th>Libras Proc.</th>
                                 <th>% Fresco y Sano</th>
                                 <th>Metabisulfito</th>
-                                <th class="bg-slate-700 text-white">Sabor Caract. %</th>
+                                <th class="bg-emerald-800 text-white">Sabor Caract. %</th>
+                                <!-- DESGLOSE COMBUSTIBLE -->
+                                <th class="bg-indigo-800 text-white" title="Sabor Combustible Entero Muy Leve %">Comb. CML %</th>
+                                <th class="bg-indigo-800 text-white" title="Sabor Combustible Entero Leve %">Comb. CL %</th>
+                                <th class="bg-indigo-900 text-white" title="Sabor Combustible Entero Fuerte %">Comb. CF %</th>
+                                <th class="bg-purple-800 text-white" title="Suma Sabor Combustible en Cola (Fuerte + Leve + Muy Leve)">Comb. Cola %</th>
+                                <!-- TIERRA Y OTROS -->
                                 <th class="bg-slate-700 text-white">Tierra TML %</th>
                                 <th class="bg-slate-700 text-white">Tierra TL %</th>
                                 <th class="bg-slate-700 text-white">Tierra TF %</th>
-                                <th class="bg-slate-700 text-white">Otros Sabores %</th>
+                                <th class="bg-slate-700 text-white" title="Choclo + Gallinaza + Mangle + Otros (Entero)">Otros Sabores %</th>
                                 <th>Mancha L/F %</th>
                                 <th>Bact. Leve %</th>
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Muy Leves">Branq. BOML %</th>
@@ -177,15 +202,13 @@
                                 <th>% Clase D</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-calor">
-                            <!-- Generado por JS -->
-                        </tbody>
+                        <tbody id="tbody-calor"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- PESTAÑA 3 -->
+        <!-- PESTAÑA 3: RANKING GENERAL -->
         <section id="tab3" class="tab-content">
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200">
@@ -209,9 +232,99 @@
                                 <th>Composición</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-ranking">
-                            <!-- Generado por JS -->
-                        </tbody>
+                        <tbody id="tbody-ranking"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE -->
+        <section id="tab4" class="tab-content">
+            <!-- KPIs de Sabores -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Sabor Característico Prom.</p>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-1" id="kpi-sab-caract">0%</h3>
+                    <p class="text-xs text-slate-400 mt-1" id="kpi-sab-caract-sub">Ponderado por libras enteras</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-indigo-600">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Incidencia Sabor Combustible</p>
+                    <h3 class="text-2xl font-black text-indigo-700 mt-1" id="kpi-sab-comb">0%</h3>
+                    <p class="text-xs text-rose-600 font-semibold mt-1" id="kpi-sab-comb-sub">0 lotes afectados (0 lbs)</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-amber-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Sabor a Tierra Total</p>
+                    <h3 class="text-2xl font-black text-amber-600 mt-1" id="kpi-sab-tierra">0%</h3>
+                    <p class="text-xs text-slate-400 mt-1" id="kpi-sab-tierra-sub">TML + TL + TF (Entero)</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Otros Sabores (Choclo/Mangle/Gall.)</p>
+                    <h3 class="text-2xl font-black text-rose-600 mt-1" id="kpi-sab-otros">0%</h3>
+                    <p class="text-xs text-slate-400 mt-1" id="kpi-sab-otros-sub">Defectos secundarios entero</p>
+                </div>
+            </div>
+
+            <!-- Fila 1 de Gráficos: Pastel de Distribución + Barras de Intensidad Combustible -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">Distribución Global de Perfiles de Sabor (Entero)</h4>
+                    <p class="text-xs text-slate-400 mb-4">Participación ponderada por libras evaluadas en planta</p>
+                    <div class="relative h-72 w-full"><canvas id="chartSaboresPie"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">Top Camaroneras con Incidencia de Sabor a Combustible</h4>
+                    <p class="text-xs text-slate-400 mb-4">Desglose por nivel de intensidad (Muy Leve, Leve, Fuerte y Cola)</p>
+                    <div class="relative h-72 w-full"><canvas id="chartCombustibleSeveridad"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Fila 2 de Gráficos: Tendencia Histórica de Mayor Incidencia en Sabores -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700">Tendencia Temporal de Incidencia de Sabores Atípicos por Fecha</h4>
+                        <p class="text-xs text-slate-400">Eje X: Fecha de llegada a planta | Identifica los días con mayor pico de sabores no característicos</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600">Vista de Tendencia:</label>
+                        <select id="trendModeSelect" onchange="renderDashboard()" class="border border-slate-300 rounded px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-50">
+                            <option value="ALL_DEFECTS">Todos los Sabores Atípicos (Combustible, Tierra, Choclo, Mangle, Otros)</option>
+                            <option value="ONLY_FUEL">Solo Desglose Combustible (CML, CL, CF y Cola)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="relative h-72 w-full"><canvas id="chartSaboresTrend"></canvas></div>
+            </div>
+
+            <!-- Matriz Ranking de Proveedores por Sabores -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 uppercase">Ranking de Proveedores por Calidad de Sabor (Mejor a Peor)</h2>
+                        <p class="text-xs text-slate-500">Clasificado por mayor % Sabor Característico y penalizado por presencia de Sabor a Combustible</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full gerencial-table whitespace-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Pos.</th>
+                                <th>Camaronera / Proveedor</th>
+                                <th>Lotes Eval.</th>
+                                <th>Lotes c/ Comb.</th>
+                                <th class="bg-emerald-800">% Sabor Caract.</th>
+                                <th class="bg-indigo-800">% Comb. Total (Ent.)</th>
+                                <th class="bg-indigo-700">% Comb. CML</th>
+                                <th class="bg-indigo-700">% Comb. CL</th>
+                                <th class="bg-indigo-900">% Comb. CF</th>
+                                <th class="bg-purple-800">% Comb. Cola</th>
+                                <th>% Tierra Total</th>
+                                <th>% Choclo</th>
+                                <th>% Mangle/Gall/Otros</th>
+                                <th>Estado Sensorial</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-ranking-sabores"></tbody>
                     </table>
                 </div>
             </div>
@@ -219,7 +332,6 @@
     </main>
 
     <script>
-        // ESCUDO DE ERRORES: Muestra errores JS en el botón para facilitar su corrección
         window.addEventListener('error', function(e) {
             let ind = document.getElementById('status-indicator');
             if(ind) {
@@ -233,10 +345,9 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
             evt.currentTarget.classList.add('active');
-            if(tabName === 'tab1') renderDashboard(); 
+            renderDashboard(); 
         }
 
-        // Se agrega 'branquias' a la base de datos
         let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], consolidado: [] };
         let charts = {};
 
@@ -245,6 +356,28 @@
             if (!val || val.toString().trim() === '') return 0;
             let cleanVal = val.toString().replace(/,/g, '').replace(/"/g, '').trim();
             return parseFloat(cleanVal) || 0;
+        }
+
+        function parseFechaLlegada(str) {
+            if (!str) return { iso: "", display: "-", dateObj: null };
+            let s = str.toString().trim();
+            let datePart = s.split(' ')[0];
+            if (datePart.includes('/')) {
+                let parts = datePart.split('/');
+                if (parts.length === 3) {
+                    let dd = parts[0].padStart(2, '0');
+                    let mm = parts[1].padStart(2, '0');
+                    let yyyy = parts[2];
+                    let iso = `${yyyy}-${mm}-${dd}`;
+                    return { iso: iso, display: s, dateObj: new Date(`${iso}T00:00:00`) };
+                }
+            } else if (datePart.includes('-')) {
+                let parts = datePart.split('-');
+                if (parts.length === 3 && parts[0].length === 4) {
+                    return { iso: datePart, display: s, dateObj: new Date(`${datePart}T00:00:00`) };
+                }
+            }
+            return { iso: "", display: s, dateObj: null };
         }
 
         function getVal(row, possibleKeys) {
@@ -274,10 +407,7 @@
                 "848": "Camaronera Puna"
             };
 
-            if (mapeoPiscinaCamaronera[finalPis]) {
-                return mapeoPiscinaCamaronera[finalPis];
-            }
-            
+            if (mapeoPiscinaCamaronera[finalPis]) return mapeoPiscinaCamaronera[finalPis];
             if (finalPis.startsWith("PU") && finalPis.length >= 3) return "Puerto Inca " + finalPis.charAt(2);
             if (finalPis.startsWith("PD")) return "Puna 2";
             if (finalPis.startsWith("PT")) return "Taura";
@@ -302,7 +432,6 @@
         document.getElementById('fileInput').addEventListener('change', function(e) {
             let files = e.target.files;
             let loaded = 0;
-            
             if(files.length === 0) return;
             document.getElementById('status-indicator').textContent = "Cargando archivos...";
 
@@ -319,9 +448,7 @@
                         else if(name.includes('branquia')) db.branquias = results.data;
                         
                         loaded++;
-                        if(loaded === files.length) {
-                            checkAndProcess();
-                        }
+                        if(loaded === files.length) checkAndProcess();
                     }
                 });
             });
@@ -329,9 +456,7 @@
 
         async function fetchInitialData() {
             try {
-                document.getElementById('status-indicator').textContent = "Buscando datos en GitHub...";
-                
-                // Se agrega Reporte_Branquias_Oscuras.csv a los archivos esperados
+                document.getElementById('status-indicator').textContent = "Buscando datos en repositorio...";
                 const files = [
                     { key: 'liquidaciones', path: './OMIPROD0016_tblControlDeLotesTmp.csv' },
                     { key: 'sabores', path: './Sabor_Desglosado_Validado.csv' },
@@ -344,18 +469,14 @@
                     let res = await fetch(f.path);
                     if (!res.ok) { allLoaded = false; break; }
                     let text = await res.text();
-                    let parsed = Papa.parse(text, { 
-                        header: true, 
-                        dynamicTyping: false, 
-                        skipEmptyLines: true 
-                    });
+                    let parsed = Papa.parse(text, { header: true, dynamicTyping: false, skipEmptyLines: true });
                     db[f.key] = parsed.data;
                 }
                 
                 if (allLoaded) {
                     checkAndProcess();
                 } else {
-                    document.getElementById('status-indicator').textContent = "Faltan CSVs en GitHub. Cárgalos localmente.";
+                    document.getElementById('status-indicator').textContent = "Faltan CSVs en servidor. Cárgalos localmente.";
                     document.getElementById('status-indicator').className = "text-xs font-semibold px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full";
                 }
             } catch (e) {
@@ -377,7 +498,6 @@
                 document.getElementById('status-indicator').className = "text-xs font-semibold px-3 py-1 bg-red-100 text-red-800 rounded-full";
                 return;
             }
-
             initProcesamiento();
         }
 
@@ -392,13 +512,15 @@
                 db.liquidaciones.forEach(row => {
                     let loteRaw = getVal(row, ['Lote', 'lote']);
                     if (loteRaw === undefined) return;
-                    
                     let lote = loteRaw.toString().trim();
                     if(!lote) return;
                     
                     if(!lotesMap.has(lote)) {
                         lotesMap.set(lote, {
                             Lote: lote,
+                            Fecha_ISO: "",
+                            Fecha_Display: "-",
+                            Tipo_MP: "",
                             Camaronera_Original_Omi: (getVal(row, ['Camaronera']) || "").trim(),
                             Piscina_Omi: (getVal(row, ['Piscina']) || "").trim(),
                             Camaronera_Oficial: "Desconocida",
@@ -410,8 +532,17 @@
                             Gramaje_OC: parseNum(getVal(row, ['Gramaje OC'])),
                             Valor_Total: 0,
                             Clases: { A: 0, B: 0, C: 0, D: 0, RECHAZO: 0 },
-                            TML: 0, TL: 0, TF: 0, Sabor_Caract: 0, Otros_Sabores: 0,
-                            BOML: 0, BOL: 0, BOF: 0 // Nuevos valores para Branquias
+                            Sabor_Caract: 0,
+                            Sabor_Caract_Cola: 0,
+                            TML: 0, TL: 0, TF: 0,
+                            CML: 0, CL: 0, CF: 0,
+                            Comb_Cola: 0,
+                            Choclo_Total: 0,
+                            Gallinaza_Total: 0,
+                            Mangle_Total: 0,
+                            Otros_Sabores: 0,
+                            Otros_Puro: 0,
+                            BOML: 0, BOL: 0, BOF: 0
                         });
                     }
                     let l = lotesMap.get(lote);
@@ -429,9 +560,7 @@
                     else if(claseStr === 'D') l.Clases.D += librasFilas;
                 });
 
-                if (lotesMap.size === 0) {
-                    throw new Error("No se detectó la columna Lote en OMIPROD.");
-                }
+                if (lotesMap.size === 0) throw new Error("No se detectó la columna Lote en OMIPROD.");
 
                 let metaTemp = {};
                 db.metabisulfito.forEach(row => {
@@ -455,6 +584,12 @@
                         let pisSab = (getVal(row, ['Piscina']) || "").trim();
                         let camSab = (getVal(row, ['Camaronera']) || "").trim();
                         
+                        let fechaRaw = getVal(row, ['Fecha llegada a planta']);
+                        let parsedF = parseFechaLlegada(fechaRaw);
+                        l.Fecha_ISO = parsedF.iso;
+                        l.Fecha_Display = parsedF.display;
+
+                        l.Tipo_MP = (getVal(row, ['Tipo de materia prima']) || "").trim();
                         l.Proveedor = (getVal(row, ['Proveedor']) || "Desconocido").trim();
                         l.Piscina = pisSab || l.Piscina_Omi;
                         
@@ -462,26 +597,45 @@
                         camaronerasSet.add(l.Camaronera_Oficial);
                         
                         l.Sabor_Caract = parseNum(getVal(row, ['Sabor caracteristico %']));
+                        l.Sabor_Caract_Cola = parseNum(getVal(row, ['Sabor caracteristico cola %']));
                         
                         l.TML = parseNum(getVal(row, ['Sabor tierra entero muy leve %']));
                         l.TL = parseNum(getVal(row, ['Sabor tierra entero leve %']));
                         l.TF = parseNum(getVal(row, ['Sabor tierra entero fuerte %']));
                         
-                        let sumaOtros = 0;
-                        for (let key in row) {
-                            if (key.trim().startsWith('Sabor') && key.trim().endsWith('%')) {
-                                let k = key.toLowerCase();
-                                if (k.includes('entero') && !k.includes('caracteristico') && !k.includes('tierra')) {
-                                    sumaOtros += parseNum(row[key]);
-                                }
-                            }
-                        }
-                        l.Otros_Sabores = sumaOtros;
-                        l.Diesel = parseNum(getVal(row, ['Sabor combustible entero fuerte %']));
+                        l.CML = parseNum(getVal(row, ['Sabor combustible entero muy leve %']));
+                        l.CL = parseNum(getVal(row, ['Sabor combustible entero leve %']));
+                        l.CF = parseNum(getVal(row, ['Sabor combustible entero fuerte %']));
+
+                        let ccf = parseNum(getVal(row, ['Sabor combustible cola fuerte %']));
+                        let ccl = parseNum(getVal(row, ['Sabor combustible cola leve %']));
+                        let ccml = parseNum(getVal(row, ['Sabor combustible cola muy leve %']));
+                        l.Comb_Cola = ccf + ccl + ccml;
+
+                        let chF = parseNum(getVal(row, ['Sabor choclo entero fuerte %']));
+                        let chL = parseNum(getVal(row, ['Sabor choclo entero leve %']));
+                        let chML = parseNum(getVal(row, ['Sabor choclo entero muy leve %']));
+                        l.Choclo_Total = chF + chL + chML;
+
+                        let gaF = parseNum(getVal(row, ['Sabor gallinaza entero fuerte %']));
+                        let gaL = parseNum(getVal(row, ['Sabor gallinaza entero leve %']));
+                        let gaML = parseNum(getVal(row, ['Sabor gallinaza entero muy leve %']));
+                        l.Gallinaza_Total = gaF + gaL + gaML;
+
+                        let maF = parseNum(getVal(row, ['Sabor mangle entero fuerte %']));
+                        let maL = parseNum(getVal(row, ['Sabor mangle entero leve %']));
+                        let maML = parseNum(getVal(row, ['Sabor mangle entero muy leve %']));
+                        l.Mangle_Total = maF + maL + maML;
+
+                        let otF = parseNum(getVal(row, ['Sabor otros entero fuerte %']));
+                        let otL = parseNum(getVal(row, ['Sabor otros entero leve %']));
+                        let otML = parseNum(getVal(row, ['Sabor otros entero muy leve %']));
+                        l.Otros_Puro = otF + otL + otML;
+
+                        l.Otros_Sabores = l.Choclo_Total + l.Gallinaza_Total + l.Mangle_Total + l.Otros_Puro;
                     }
                 });
 
-                // Inyección de información de Branquias Oscuras
                 db.branquias.forEach(row => {
                     let lote = (getVal(row, ['Lote', 'lote']) || '').toString().trim();
                     if(lotesMap.has(lote)) {
@@ -494,7 +648,6 @@
 
                 Array.from(lotesMap.values()).forEach(l => {
                     let lote = l.Lote;
-                    
                     if (l.Camaronera_Oficial === "Desconocida" && (l.Camaronera_Original_Omi || l.Piscina_Omi)) {
                         l.Camaronera_Oficial = resolveCamaronera(null, null, l.Camaronera_Original_Omi, l.Piscina_Omi);
                         camaronerasSet.add(l.Camaronera_Oficial);
@@ -517,14 +670,16 @@
                     if(l.Clases.C > maxLbs) { cValida = 'C'; maxLbs = l.Clases.C; }
                     if(l.Clases.D > maxLbs) { cValida = 'D'; maxLbs = l.Clases.D; }
                     
-                    l.Clase_Valida = (l.Diesel > 0) ? 'D' : cValida;
+                    l.Comb_Entero_Total = l.CML + l.CL + l.CF;
+                    l.Tierra_Entero_Total = l.TML + l.TL + l.TF;
+                    l.Clase_Valida = (l.Comb_Entero_Total > 0) ? 'D' : cValida;
                 });
 
                 db.consolidado = Array.from(lotesMap.values());
                 
                 let camSelect = document.getElementById('filterCamaronera');
                 if (camSelect) {
-                    camSelect.innerHTML = '<option value="ALL">Todas</option>';
+                    camSelect.innerHTML = '<option value="ALL">Todas las Camaroneras</option>';
                     Array.from(camaronerasSet).sort().forEach(c => {
                          let opt = document.createElement('option');
                          opt.value = c; opt.innerHTML = c;
@@ -548,22 +703,50 @@
             charts[id] = new Chart(canvas, config);
         }
 
+        function resetFilters() {
+            document.getElementById('filterFechaDesde').value = '';
+            document.getElementById('filterFechaHasta').value = '';
+            document.getElementById('filterCamaronera').value = 'ALL';
+            document.getElementById('filterClase').value = 'ALL';
+            renderDashboard();
+        }
+
         function getFilteredData() {
-            let filterCam = document.getElementById('filterCamaronera') ? document.getElementById('filterCamaronera').value : 'ALL';
-            let filterClase = document.getElementById('filterClase') ? document.getElementById('filterClase').value : 'ALL';
+            let filterCam = document.getElementById('filterCamaronera').value;
+            let filterClase = document.getElementById('filterClase').value;
+            let fDesde = document.getElementById('filterFechaDesde').value;
+            let fHasta = document.getElementById('filterFechaHasta').value;
             
             return db.consolidado.filter(d => {
                 let matchCam = filterCam === 'ALL' || d.Camaronera_Oficial === filterCam;
                 let matchClase = filterClase === 'ALL' || d.Clase_Valida === filterClase;
-                return matchCam && matchClase;
+                
+                let matchFecha = true;
+                if (fDesde || fHasta) {
+                    if (!d.Fecha_ISO) {
+                        matchFecha = false;
+                    } else {
+                        if (fDesde && d.Fecha_ISO < fDesde) matchFecha = false;
+                        if (fHasta && d.Fecha_ISO > fHasta) matchFecha = false;
+                    }
+                }
+                return matchCam && matchClase && matchFecha;
             });
         }
 
         function renderDashboard() {
             try {
                 const data = getFilteredData();
-                if(data.length === 0) return; 
+                document.getElementById('filter-summary').innerText = `Mostrando ${data.length} de ${db.consolidado.length} lotes`;
+
+                if(data.length === 0) {
+                    document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="25" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
+                    document.getElementById('tbody-ranking').innerHTML = '';
+                    document.getElementById('tbody-ranking-sabores').innerHTML = '';
+                    return; 
+                }
                 
+                // --- PESTAÑA 1: RENDIMIENTO ---
                 let totalRecibidas = data.reduce((a,b)=>a+b.Libras_Recibidas, 0);
                 let totalProcesadas = data.reduce((a,b)=>a+b.Libras_Procesadas, 0);
                 let totalRechazo = data.reduce((a,b)=>a+b.Rechazo, 0);
@@ -622,8 +805,7 @@
                     }
                 });
 
-                let activePlugins = [];
-                if(typeof ChartDataLabels !== 'undefined') activePlugins.push(ChartDataLabels);
+                let activePlugins = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
 
                 createChart('chartPie', {
                     type: 'pie',
@@ -645,25 +827,14 @@
                                 formatter: (value, ctx) => {
                                     let total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                     if (value === 0 || total === 0) return '';
-                                    let percentage = ((value / total) * 100).toFixed(1) + '%';
-                                    return percentage;
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        let value = context.raw;
-                                        let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        let percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                                        return `${label}: ${percentage} (${value.toLocaleString()} lbs)`;
-                                    }
+                                    return ((value / total) * 100).toFixed(1) + '%';
                                 }
                             }
                         }
                     }
                 });
 
+                // --- PESTAÑA 2: MATRIZ ORGANOLÉPTICA ---
                 let cls = { A:{lbs:0}, B:{lbs:0}, C:{lbs:0}, D:{lbs:0} };
                 data.forEach(d => {
                     if(d.Clase_Valida === 'A') cls.A.lbs += d.Libras_Procesadas;
@@ -698,10 +869,10 @@
                         <td>&gt; 20%</td>
                         <td class="font-bold text-rose-600">${cls.C.lbs.toLocaleString('en-US',{maximumFractionDigits:0})} lb (${((cls.C.lbs/totValidas)*100).toFixed(1)}%)</td>
                     </tr>
-                    <tr class="bg-indigo-50/30">
+                    <tr class="bg-indigo-50/40">
                         <td class="font-bold text-indigo-800">CLASE D</td>
-                        <td colspan="4" class="text-indigo-600 font-semibold text-center">Presencia de Sabor Combustible / Diesel</td>
-                        <td class="font-bold text-indigo-700">${cls.D.lbs.toLocaleString('en-US',{maximumFractionDigits:0})} lb (${((cls.D.lbs/totValidas)*100).toFixed(1)}%)</td>
+                        <td colspan="4" class="text-indigo-700 font-semibold text-center">Presencia de Sabor Combustible / Diesel (CML, CL o CF &gt; 0%)</td>
+                        <td class="font-bold text-indigo-800">${cls.D.lbs.toLocaleString('en-US',{maximumFractionDigits:0})} lb (${((cls.D.lbs/totValidas)*100).toFixed(1)}%)</td>
                     </tr>
                 `;
 
@@ -722,15 +893,25 @@
                     let colorB = pB >= 20 ? 'text-amber-600' : 'text-slate-600';
                     let colorC = pC > 0 ? 'text-rose-600' : 'text-slate-600';
                     let colorD = pD > 0 ? 'text-indigo-600' : 'text-slate-600';
+
+                    let cmlStyle = d.CML > 0 ? 'bg-indigo-100 text-indigo-900 font-bold' : 'bg-indigo-50/40 text-slate-400';
+                    let clStyle  = d.CL > 0  ? 'bg-indigo-200 text-indigo-950 font-bold' : 'bg-indigo-50/40 text-slate-400';
+                    let cfStyle  = d.CF > 0  ? 'bg-rose-600 text-white font-black' : 'bg-indigo-50/40 text-slate-400';
+                    let ccStyle  = d.Comb_Cola > 0 ? 'bg-purple-200 text-purple-950 font-bold' : 'bg-purple-50/40 text-slate-400';
                     
                     return `<tr>
                         <td class="font-mono font-bold">${d.Lote}</td>
+                        <td class="text-xs text-slate-500 font-mono">${d.Fecha_Display}</td>
                         <td class="font-semibold">${d.Camaronera_Oficial}</td>
                         <td>${d.Piscina}</td>
                         <td class="font-mono">${d.Libras_Procesadas.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
                         <td><span class="${badgeFr}">${fr.toFixed(1)}%</span></td>
                         <td class="font-mono text-slate-700">${meta.toFixed(1)}</td>
-                        <td class="bg-slate-50 font-bold text-emerald-700">${(d.Sabor_Caract || 0).toFixed(1)}%</td>
+                        <td class="bg-emerald-50/50 font-bold text-emerald-700">${(d.Sabor_Caract || 0).toFixed(1)}%</td>
+                        <td class="${cmlStyle}">${d.CML.toFixed(1)}%</td>
+                        <td class="${clStyle}">${d.CL.toFixed(1)}%</td>
+                        <td class="${cfStyle}">${d.CF.toFixed(1)}%</td>
+                        <td class="${ccStyle}">${d.Comb_Cola.toFixed(1)}%</td>
                         <td class="bg-slate-50 font-medium">${d.TML.toFixed(1)}%</td>
                         <td class="bg-slate-50 font-medium">${d.TL.toFixed(1)}%</td>
                         <td class="bg-slate-50 font-medium">${d.TF.toFixed(1)}%</td>
@@ -747,6 +928,7 @@
                     </tr>`;
                 }).join('');
 
+                // --- PESTAÑA 3: RANKING GENERAL ---
                 let provs = {};
                 data.forEach(d => {
                     let p = d.Camaronera_Oficial || "Desconocida";
@@ -803,6 +985,9 @@
                     </tr>
                 `).join('');
 
+                // --- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE ---
+                renderSaboresTab(data, activePlugins);
+
             } catch(error) {
                 console.error("Error en renderDashboard:", error);
                 document.getElementById('status-indicator').textContent = "Fallo en renderizado: " + error.message;
@@ -813,15 +998,365 @@
             }
         }
 
+        function renderSaboresTab(data, activePlugins) {
+            let lbsEvalTotal = 0;
+            let sumCaract = 0, sumComb = 0, sumTierra = 0, sumChoclo = 0, sumGallinaza = 0, sumMangle = 0, sumOtrosPuro = 0;
+            let lotesConCombustible = 0;
+            let lbsConCombustible = 0;
+
+            let provSabores = {};
+            let trendMap = {};
+
+            data.forEach(d => {
+                let peso = d.Libras_Recibidas > 0 ? d.Libras_Recibidas : (d.Libras_Procesadas || 1);
+                let totalSabEntero = d.Sabor_Caract + d.Comb_Entero_Total + d.Tierra_Entero_Total + d.Otros_Sabores;
+                
+                if (totalSabEntero > 0) {
+                    lbsEvalTotal += peso;
+                    sumCaract += d.Sabor_Caract * peso;
+                    sumComb += d.Comb_Entero_Total * peso;
+                    sumTierra += d.Tierra_Entero_Total * peso;
+                    sumChoclo += d.Choclo_Total * peso;
+                    sumGallinaza += d.Gallinaza_Total * peso;
+                    sumMangle += d.Mangle_Total * peso;
+                    sumOtrosPuro += d.Otros_Puro * peso;
+                }
+
+                if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) {
+                    lotesConCombustible++;
+                    lbsConCombustible += peso;
+                }
+
+                let cam = d.Camaronera_Oficial || "Desconocida";
+                if (!provSabores[cam]) {
+                    provSabores[cam] = {
+                        nombre: cam, lotes: 0, lotesComb: 0, pesoTotal: 0, pesoEntero: 0,
+                        caract: 0, combEnt: 0, cml: 0, cl: 0, cf: 0, combCola: 0,
+                        tierra: 0, choclo: 0, otrosMG: 0
+                    };
+                }
+                let p = provSabores[cam];
+                p.lotes++;
+                p.pesoTotal += peso;
+                if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) p.lotesComb++;
+                p.combCola += d.Comb_Cola * peso;
+
+                if (totalSabEntero > 0) {
+                    p.pesoEntero += peso;
+                    p.caract += d.Sabor_Caract * peso;
+                    p.combEnt += d.Comb_Entero_Total * peso;
+                    p.cml += d.CML * peso;
+                    p.cl += d.CL * peso;
+                    p.cf += d.CF * peso;
+                    p.tierra += d.Tierra_Entero_Total * peso;
+                    p.choclo += d.Choclo_Total * peso;
+                    p.otrosMG += (d.Gallinaza_Total + d.Mangle_Total + d.Otros_Puro) * peso;
+                }
+
+                // Agrupación por Fecha de Llegada a Planta para Tendencia
+                if (d.Fecha_ISO) {
+                    if (!trendMap[d.Fecha_ISO]) {
+                        trendMap[d.Fecha_ISO] = { 
+                            fecha: d.Fecha_ISO, 
+                            pesoEntero: 0, pesoTotal: 0,
+                            combEnt: 0, cml: 0, cl: 0, cf: 0, combCola: 0,
+                            tierra: 0, choclo: 0, mangle: 0, otrosMG: 0,
+                            lotesComb: 0, lotesTotal: 0
+                        };
+                    }
+                    let t = trendMap[d.Fecha_ISO];
+                    t.lotesTotal++;
+                    t.pesoTotal += peso;
+                    t.combCola += d.Comb_Cola * peso;
+                    if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) t.lotesComb++;
+
+                    if (totalSabEntero > 0) {
+                        t.pesoEntero += peso;
+                        t.combEnt += d.Comb_Entero_Total * peso;
+                        t.cml += d.CML * peso;
+                        t.cl += d.CL * peso;
+                        t.cf += d.CF * peso;
+                        t.tierra += d.Tierra_Entero_Total * peso;
+                        t.choclo += d.Choclo_Total * peso;
+                        t.mangle += d.Mangle_Total * peso;
+                        t.otrosMG += (d.Gallinaza_Total + d.Otros_Puro) * peso;
+                    }
+                }
+            });
+
+            let div = lbsEvalTotal > 0 ? lbsEvalTotal : 1;
+            let pctCaract = sumCaract / div;
+            let pctComb = sumComb / div;
+            let pctTierra = sumTierra / div;
+            let pctChoclo = sumChoclo / div;
+            let pctGallinaza = sumGallinaza / div;
+            let pctMangle = sumMangle / div;
+            let pctOtrosPuro = sumOtrosPuro / div;
+            let pctOtrosTot = pctChoclo + pctGallinaza + pctMangle + pctOtrosPuro;
+
+            document.getElementById('kpi-sab-caract').innerText = pctCaract.toFixed(1) + "%";
+            document.getElementById('kpi-sab-comb').innerText = pctComb.toFixed(2) + "%";
+            document.getElementById('kpi-sab-comb-sub').innerText = `${lotesConCombustible} lotes afectados (${lbsConCombustible.toLocaleString('en-US',{maximumFractionDigits:0})} lbs)`;
+            document.getElementById('kpi-sab-tierra').innerText = pctTierra.toFixed(1) + "%";
+            document.getElementById('kpi-sab-otros').innerText = pctOtrosTot.toFixed(1) + "%";
+
+            // 1. Gráfico de Pastel (Dona)
+            createChart('chartSaboresPie', {
+                type: 'doughnut',
+                plugins: activePlugins,
+                data: {
+                    labels: ['Característico', 'Tierra', 'Combustible', 'Choclo', 'Mangle', 'Gallinaza', 'Otros'],
+                    datasets: [{
+                        data: [pctCaract, pctTierra, pctComb, pctChoclo, pctMangle, pctGallinaza, pctOtrosPuro],
+                        backgroundColor: ['#10b981', '#f59e0b', '#4f46e5', '#eab308', '#8b5cf6', '#ec4899', '#64748b'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (val) => val >= 1.5 ? val.toFixed(1) + '%' : ''
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.label}: ${ctx.raw.toFixed(2)}%`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Ranking de Proveedores por Sabores
+            let rankSabores = Object.values(provSabores).map(p => {
+                let pEnt = p.pesoEntero > 0 ? p.pesoEntero : 1;
+                let pTot = p.pesoTotal > 0 ? p.pesoTotal : 1;
+                let hasEntero = p.pesoEntero > 0;
+
+                return {
+                    nombre: p.nombre,
+                    lotes: p.lotes,
+                    lotesComb: p.lotesComb,
+                    hasEntero: hasEntero,
+                    pctCaract: hasEntero ? (p.caract / pEnt) : 0,
+                    pctCombEnt: hasEntero ? (p.combEnt / pEnt) : 0,
+                    pctCML: hasEntero ? (p.cml / pEnt) : 0,
+                    pctCL: hasEntero ? (p.cl / pEnt) : 0,
+                    pctCF: hasEntero ? (p.cf / pEnt) : 0,
+                    pctCombCola: p.combCola / pTot,
+                    pctTierra: hasEntero ? (p.tierra / pEnt) : 0,
+                    pctChoclo: hasEntero ? (p.choclo / pEnt) : 0,
+                    pctOtrosMG: hasEntero ? (p.otrosMG / pEnt) : 0
+                };
+            }).sort((a, b) => {
+                let combA = a.pctCombEnt + a.pctCombCola;
+                let combB = b.pctCombEnt + b.pctCombCola;
+                if (Math.abs(combA - combB) > 0.01) return combA - combB;
+                if (a.hasEntero !== b.hasEntero) return b.hasEntero - a.hasEntero;
+                return b.pctCaract - a.pctCaract;
+            });
+
+            // 2. Gráfico de Barras Apiladas: Top Camaroneras con Combustible
+            let topComb = [...rankSabores]
+                .filter(r => (r.pctCombEnt + r.pctCombCola) > 0)
+                .sort((a, b) => (b.pctCombEnt + b.pctCombCola) - (a.pctCombEnt + a.pctCombCola))
+                .slice(0, 8);
+
+            createChart('chartCombustibleSeveridad', {
+                type: 'bar',
+                data: {
+                    labels: topComb.length > 0 ? topComb.map(c => c.nombre) : ['Sin incidencia de combustible'],
+                    datasets: [
+                        { label: 'Comb. Muy Leve (CML)', data: topComb.map(c => c.pctCML), backgroundColor: '#818cf8' },
+                        { label: 'Comb. Leve (CL)', data: topComb.map(c => c.pctCL), backgroundColor: '#4f46e5' },
+                        { label: 'Comb. Fuerte (CF)', data: topComb.map(c => c.pctCF), backgroundColor: '#e11d48' },
+                        { label: 'Comb. Cola', data: topComb.map(c => c.pctCombCola), backgroundColor: '#9333ea' }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, title: { display: true, text: '% Incidencia Ponderada' } },
+                        y: { stacked: true }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // 3. Gráfico de Tendencias por Fecha (Eje X = Fechas de Llegada)
+            let trendArr = Object.values(trendMap).sort((a, b) => a.fecha.localeCompare(b.fecha));
+            let trendMode = document.getElementById('trendModeSelect') ? document.getElementById('trendModeSelect').value : 'ALL_DEFECTS';
+
+            let trendDatasets = [];
+            if (trendMode === 'ONLY_FUEL') {
+                trendDatasets = [
+                    {
+                        label: 'Comb. Fuerte (CF %)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.cf / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#e11d48',
+                        backgroundColor: 'rgba(225, 29, 72, 0.15)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Comb. Leve (CL %)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.cl / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Comb. Muy Leve (CML %)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.cml / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#818cf8',
+                        backgroundColor: 'transparent',
+                        borderDash: [4, 4],
+                        borderWidth: 2,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Comb. en Cola (%)',
+                        data: trendArr.map(t => t.pesoTotal > 0 ? +(t.combCola / t.pesoTotal).toFixed(2) : 0),
+                        borderColor: '#9333ea',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.3
+                    }
+                ];
+            } else {
+                trendDatasets = [
+                    {
+                        label: 'Sabor Combustible Total (%)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.combEnt / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.15)',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Sabor a Tierra (%)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.tierra / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                        borderWidth: 2,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Sabor a Choclo (%)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.choclo / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#eab308',
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Sabor a Mangle (%)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.mangle / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Gallinaza / Otros (%)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.otrosMG / t.pesoEntero).toFixed(2) : 0),
+                        borderColor: '#ec4899',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.3
+                    }
+                ];
+            }
+
+            createChart('chartSaboresTrend', {
+                type: 'line',
+                data: {
+                    labels: trendArr.map(t => t.fecha),
+                    datasets: trendDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Fecha de Llegada a Planta', font: { weight: 'bold' } },
+                            ticks: { maxRotation: 45, minRotation: 0 }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: '% Incidencia Ponderada en Lotes', font: { weight: 'bold' } }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: (items) => {
+                                    let idx = items[0].dataIndex;
+                                    let info = trendArr[idx];
+                                    return `\nLotes recibidos ese día: ${info.lotesTotal}\nLotes con combustible: ${info.lotesComb}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Renderizar Tabla Ranking de Sabores
+            document.getElementById('tbody-ranking-sabores').innerHTML = rankSabores.map((r, i) => {
+                let tieneComb = (r.pctCombEnt > 0 || r.pctCombCola > 0);
+                let rowBg = tieneComb ? 'bg-rose-50/40 hover:bg-rose-50' : 'hover:bg-slate-50';
+                let posBadge = tieneComb ? 'bg-rose-600' : (r.pctCaract >= 90 ? 'bg-emerald-600' : 'bg-amber-500');
+                
+                let estadoBadge = '<span class="badge-green">Óptimo</span>';
+                if (r.pctCF > 0 || r.pctCombEnt >= 5) estadoBadge = '<span class="badge-red"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Crítico Combustible</span>';
+                else if (tieneComb) estadoBadge = '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full font-bold text-xs">Alerta Combustible</span>';
+                else if (!r.hasEntero) estadoBadge = '<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded-full font-semibold text-xs">Solo Descabezado</span>';
+                else if (r.pctTierra > 15 || r.pctCaract < 80) estadoBadge = '<span class="badge-yellow">Desviación Sabor</span>';
+
+                return `<tr class="${rowBg}">
+                    <td><span class="${posBadge} text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">${i+1}</span></td>
+                    <td class="font-bold text-slate-800">${r.nombre}</td>
+                    <td>${r.lotes}</td>
+                    <td class="font-bold ${r.lotesComb > 0 ? 'text-rose-600' : 'text-slate-400'}">${r.lotesComb}</td>
+                    <td class="font-bold text-emerald-700 bg-emerald-50/40">${r.hasEntero ? r.pctCaract.toFixed(1) + '%' : 'N/A'}</td>
+                    <td class="font-black ${r.pctCombEnt > 0 ? 'text-indigo-800 bg-indigo-100/70' : 'text-slate-400'}">${r.pctCombEnt.toFixed(2)}%</td>
+                    <td class="${r.pctCML > 0 ? 'text-indigo-700 font-bold' : 'text-slate-400'}">${r.pctCML.toFixed(2)}%</td>
+                    <td class="${r.pctCL > 0 ? 'text-indigo-800 font-bold' : 'text-slate-400'}">${r.pctCL.toFixed(2)}%</td>
+                    <td class="${r.pctCF > 0 ? 'text-rose-700 font-black' : 'text-slate-400'}">${r.pctCF.toFixed(2)}%</td>
+                    <td class="${r.pctCombCola > 0 ? 'text-purple-800 font-bold bg-purple-50' : 'text-slate-400'}">${r.pctCombCola.toFixed(2)}%</td>
+                    <td class="font-medium">${r.pctTierra.toFixed(1)}%</td>
+                    <td class="font-medium">${r.pctChoclo.toFixed(1)}%</td>
+                    <td class="font-medium">${r.pctOtrosMG.toFixed(1)}%</td>
+                    <td>${estadoBadge}</td>
+                </tr>`;
+            }).join('');
+        }
+
         function filterCalorTable() {
             let input = document.getElementById("searchCalor").value.toUpperCase();
             let trs = document.getElementById("table-calor").getElementsByTagName("tbody")[0].getElementsByTagName("tr");
             for (let i = 0; i < trs.length; i++) {
                 let tdLote = trs[i].getElementsByTagName("td")[0];
-                let tdCam = trs[i].getElementsByTagName("td")[1];
-                let tdPis = trs[i].getElementsByTagName("td")[2];
+                let tdFecha = trs[i].getElementsByTagName("td")[1];
+                let tdCam = trs[i].getElementsByTagName("td")[2];
+                let tdPis = trs[i].getElementsByTagName("td")[3];
                 if (tdLote || tdCam || tdPis) {
                     let txt = (tdLote.textContent || tdLote.innerText) + " " + 
+                              (tdFecha.textContent || tdFecha.innerText) + " " + 
                               (tdCam.textContent || tdCam.innerText) + " " + 
                               (tdPis.textContent || tdPis.innerText);
                     trs[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? "" : "none";
@@ -851,7 +1386,6 @@
             document.body.removeChild(downloadLink);
         }
 
-        // Arranque asegurado
         window.addEventListener('DOMContentLoaded', fetchInitialData);
     </script>
 </body>
