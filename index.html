@@ -105,13 +105,11 @@
                     <h3 class="text-2xl font-black text-slate-800 mt-1" id="kpi-rendimiento">0%</h3>
                     <p class="text-xs text-slate-400 mt-1" id="kpi-rendimiento-sub">Proc / Recibido</p>
                 </div>
-                <!-- KPI 2: CALIDAD FÍSICA (FRESCO Y SANO) -->
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
                     <p class="text-xs text-slate-500 font-bold uppercase">Fresco y Sano Promedio</p>
                     <h3 class="text-2xl font-black text-emerald-600 mt-1" id="kpi-fresco">0%</h3>
                     <p class="text-xs text-slate-400 mt-1" id="kpi-fresco-sub">0 lbs aptas Clase A (&ge;60%)</p>
                 </div>
-                <!-- KPI 3: MERMA / BASURA EN RECEPCIÓN -->
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
                     <p class="text-xs text-slate-500 font-bold uppercase">Merma / Basura en Recepción</p>
                     <h3 class="text-2xl font-black text-amber-600 mt-1" id="kpi-basura">0%</h3>
@@ -183,13 +181,11 @@
                                 <th>% Fresco y Sano</th>
                                 <th>Metabisulfito</th>
                                 <th class="bg-emerald-800 text-white">Sabor Caract. %</th>
-                                <!-- SABORES CONSOLIDADOS (SOLO ENTERO) -->
                                 <th class="bg-indigo-800 text-white" title="Total Sabor Combustible Entero % (CML + CL + CF + Otros)">Combustible %</th>
                                 <th class="bg-slate-700 text-white" title="Total Sabor Tierra Entero % (TML + TL + TF)">Tierra %</th>
                                 <th class="bg-slate-700 text-white" title="Total Choclo + Gallinaza + Mangle (Entero)">Otros Sabores %</th>
                                 <th>Mancha L/F %</th>
                                 <th>Bact. Leve %</th>
-                                <!-- BRANQUIAS OSCURAS SEPARADAS -->
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Muy Leves">Branq. BOML %</th>
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Leves">Branq. BOL %</th>
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Fuertes">Branq. BOF %</th>
@@ -237,7 +233,6 @@
 
         <!-- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE -->
         <section id="tab4" class="tab-content">
-            <!-- KPIs de Sabores (Calculados sobre Libras recibidas total) -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
                     <p class="text-xs text-slate-500 font-bold uppercase">Sabor Característico</p>
@@ -261,7 +256,6 @@
                 </div>
             </div>
 
-            <!-- Fila 1 de Gráficos: Pastel de Distribución + Barras Únicas de Top Camaroneras con Combustible -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
                     <h4 class="text-sm font-bold text-slate-700 mb-1">Distribución Global de Perfiles de Sabor (Sobre Libras Recibidas)</h4>
@@ -275,7 +269,6 @@
                 </div>
             </div>
 
-            <!-- Fila 2 de Gráficos: Tendencia Histórica de Mayor Incidencia en Sabores -->
             <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                     <div>
@@ -293,7 +286,6 @@
                 <div class="relative h-72 w-full"><canvas id="chartSaboresTrend"></canvas></div>
             </div>
 
-            <!-- Matriz Ranking de Proveedores por Sabores -->
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <div>
@@ -350,10 +342,63 @@
         let charts = {};
 
         function parseNum(val) {
-            if (typeof val === 'number') return val;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
             if (!val || val.toString().trim() === '') return 0;
             let cleanVal = val.toString().replace(/,/g, '').replace(/"/g, '').trim();
             return parseFloat(cleanVal) || 0;
+        }
+
+        /**
+         * Replica en JS la lógica del script Python `separar_cantidad_porcentaje`:
+         * Identifica columnas que empiezan con "E. " (y no terminan con "(%)")
+         * y separa el formato "12 (15 %)" en cantidad numérica (columna original)
+         * y porcentaje numérico (columna `${col} (%)`).
+         * Si la columna `${col} (%)` ya viene precalculada en el CSV, la conserva.
+         */
+        function separarCantidadPorcentajeEnFilas(rows) {
+            if (!Array.isArray(rows) || rows.length === 0) return rows;
+
+            // Recolectar todos los nombres de columnas que empiezan con "E. " y no son ya "(%)"
+            const defectColsSet = new Set();
+            rows.forEach(row => {
+                Object.keys(row).forEach(k => {
+                    const clean = k.replace(/[\uFEFF\u200B\u200C\u200D\u2028\u2029\"\'\\]/g, '').trim();
+                    if (clean.startsWith("E. ") && !clean.endsWith("(%)")) {
+                        defectColsSet.add(k);
+                    }
+                });
+            });
+
+            // Regex equivalente a: r'^\s*(\d+(?:\.\d+)?)\s*(?:\(\s*(\d+(?:\.\d+)?)\s*%\s*\))?'
+            const regexCantPct = /^\s*(\d+(?:\.\d+)?)\s*(?:\(\s*(\d+(?:\.\d+)?)\s*%\s*\))?/;
+
+            return rows.map(row => {
+                const newRow = { ...row };
+                defectColsSet.forEach(origKey => {
+                    const cleanOrigKey = origKey.replace(/[\uFEFF\u200B\u200C\u200D\u2028\u2029\"\'\\]/g, '').trim();
+                    const pctKey = `${cleanOrigKey} (%)`;
+
+                    // Buscar si ya existe una columna de porcentaje poblada con número
+                    const existingPctVal = getVal(newRow, [pctKey]);
+                    const hasExistingPct = existingPctVal !== undefined && existingPctVal !== null && existingPctVal.toString().trim() !== '' && !isNaN(parseFloat(existingPctVal.toString().replace(/,/g, '')));
+
+                    const rawVal = newRow[origKey];
+                    const strVal = rawVal === undefined || rawVal === null ? '' : rawVal.toString().trim();
+
+                    const match = strVal.match(regexCantPct);
+                    const cantidad = match && match[1] !== undefined ? (parseFloat(match[1]) || 0) : parseNum(rawVal);
+                    const porcentajeExtraido = match && match[2] !== undefined ? (parseFloat(match[2]) || 0.0) : 0.0;
+
+                    // Guardar cantidad numérica en la columna original
+                    newRow[origKey] = cantidad;
+
+                    // Si no venía ya el porcentaje en columna aparte, asignar el extraído del paréntesis
+                    if (!hasExistingPct) {
+                        newRow[pctKey] = porcentajeExtraido;
+                    }
+                });
+                return newRow;
+            });
         }
 
         function parseFechaLlegada(str) {
@@ -379,6 +424,7 @@
         }
 
         function getVal(row, possibleKeys) {
+            if (!row) return undefined;
             if (!Array.isArray(possibleKeys)) possibleKeys = [possibleKeys];
             for (let k in row) {
                 let cleanKey = k.replace(/[\uFEFF\u200B\u200C\u200D\u2028\u2029\"\'\\]/g, '').trim().toLowerCase();
@@ -442,7 +488,7 @@
                         let name = file.name.toLowerCase();
                         if(name.includes('omiprod')) db.liquidaciones = results.data;
                         else if(name.includes('sabor')) db.sabores = results.data;
-                        else if(name.includes('metabisulfito')) db.metabisulfito = results.data;
+                        else if(name.includes('metabisulfito')) db.metabisulfito = separarCantidadPorcentajeEnFilas(results.data);
                         else if(name.includes('branquia')) db.branquias = results.data;
                         
                         loaded++;
@@ -464,11 +510,13 @@
                 
                 let allLoaded = true;
                 for (let f of files) {
-                    let res = await fetch(f.path);
+                    let res = await fetch(f.path, { cache: "no-store" });
                     if (!res.ok) { allLoaded = false; break; }
                     let text = await res.text();
                     let parsed = Papa.parse(text, { header: true, dynamicTyping: false, skipEmptyLines: true });
-                    db[f.key] = parsed.data;
+                    db[f.key] = (f.key === 'metabisulfito')
+                        ? separarCantidadPorcentajeEnFilas(parsed.data)
+                        : parsed.data;
                 }
                 
                 if (allLoaded) {
@@ -504,6 +552,9 @@
                 document.getElementById('status-indicator').textContent = "Procesando Datos...";
                 document.getElementById('status-indicator').className = "text-xs font-semibold px-3 py-1 bg-blue-100 text-blue-800 rounded-full";
                 
+                // Asegurar separación de cantidad y porcentaje aunque db.metabisulfito se haya asignado externamente
+                db.metabisulfito = separarCantidadPorcentajeEnFilas(db.metabisulfito);
+
                 let lotesMap = new Map();
                 let camaronerasSet = new Set();
 
@@ -566,13 +617,13 @@
                     if(!lote) return;
                     if(!metaTemp[lote]) metaTemp[lote] = { totalLbs: 0, frescoSuma: 0, metaSuma: 0, manchaL: 0, manchaF: 0, bactL: 0 };
                     
-                    let lbs = parseNum(getVal(row, ['Libras recibidas']));
+                    let lbs = parseNum(getVal(row, ['Libras recibidas', 'Libras recibidas total']));
                     metaTemp[lote].totalLbs += lbs;
-                    metaTemp[lote].frescoSuma += parseNum(getVal(row, ['E. fresco y sano (%)'])) * lbs;
+                    metaTemp[lote].frescoSuma += parseNum(getVal(row, ['E. fresco y sano (%)', 'E. fresco y sano'])) * lbs;
                     metaTemp[lote].metaSuma += parseNum(getVal(row, ['Porcentaje de metabisulfito'])) * lbs;
-                    metaTemp[lote].manchaL += parseNum(getVal(row, ['E. mancha leve (%)'])) * lbs;
-                    metaTemp[lote].manchaF += parseNum(getVal(row, ['E. mancha fuerte (%)'])) * lbs;
-                    metaTemp[lote].bactL += parseNum(getVal(row, ['E. hongo/bacteria leve (%)'])) * lbs;
+                    metaTemp[lote].manchaL += parseNum(getVal(row, ['E. mancha leve (%)', 'E. mancha leve'])) * lbs;
+                    metaTemp[lote].manchaF += parseNum(getVal(row, ['E. mancha fuerte (%)', 'E. mancha fuerte'])) * lbs;
+                    metaTemp[lote].bactL += parseNum(getVal(row, ['E. hongo/bacteria leve (%)', 'E. hongo/bacteria leve'])) * lbs;
                 });
 
                 db.sabores.forEach(row => {
@@ -582,12 +633,12 @@
                         let pisSab = (getVal(row, ['Piscina']) || "").trim();
                         let camSab = (getVal(row, ['Camaronera']) || "").trim();
                         
-                        let fechaRaw = getVal(row, ['Fecha llegada a planta']);
+                        let fechaRaw = getVal(row, ['Fecha llegada a planta', 'Fecha de llegada']);
                         let parsedF = parseFechaLlegada(fechaRaw);
                         l.Fecha_ISO = parsedF.iso;
                         l.Fecha_Display = parsedF.display;
 
-                        let lbsRecSab = parseNum(getVal(row, ['Libras recibidas total']));
+                        let lbsRecSab = parseNum(getVal(row, ['Libras recibidas total', 'Libras recibidas']));
                         l.Libras_Recibidas_Sabores = lbsRecSab > 0 ? lbsRecSab : l.Libras_Recibidas;
 
                         l.Tipo_MP = (getVal(row, ['Tipo de materia prima']) || "").trim();
@@ -604,7 +655,6 @@
                         l.TL = parseNum(getVal(row, ['Sabor tierra entero leve %']));
                         l.TF = parseNum(getVal(row, ['Sabor tierra entero fuerte %']));
                         
-                        // Regla de Planta: "Otros" corresponde a combustible
                         let otML = parseNum(getVal(row, ['Sabor otros entero muy leve %']));
                         let otL  = parseNum(getVal(row, ['Sabor otros entero leve %']));
                         let otF  = parseNum(getVal(row, ['Sabor otros entero fuerte %']));
@@ -621,7 +671,6 @@
                         let otColaML = parseNum(getVal(row, ['Sabor otros cola muy leve %']));
                         l.Comb_Cola = ccf + ccl + ccml + otColaF + otColaL + otColaML;
 
-                        // Sabores vegetales/orgánicos en Entero (Choclo, Gallinaza, Mangle)
                         let chF = parseNum(getVal(row, ['Sabor choclo entero fuerte %']));
                         let chL = parseNum(getVal(row, ['Sabor choclo entero leve %']));
                         let chML = parseNum(getVal(row, ['Sabor choclo entero muy leve %']));
@@ -755,7 +804,6 @@
                     return; 
                 }
                 
-                // --- PESTAÑA 1: RENDIMIENTO Y NUEVOS KPIs ---
                 let totalRecibidas = data.reduce((a,b)=>a+b.Libras_Recibidas, 0);
                 let totalProcesadas = data.reduce((a,b)=>a+b.Libras_Procesadas, 0);
                 let totalRechazo = data.reduce((a,b)=>a+b.Rechazo, 0);
@@ -768,22 +816,17 @@
                 
                 let rndIndustrial = totalRecibidas > 0 ? (totalProcesadas/totalRecibidas)*100 : 0;
 
-                // KPI 2: % Fresco y Sano Ponderado
                 let sumFrescoPonderado = data.reduce((a,b)=> a + (b.Perc_Fresco * b.Libras_Procesadas), 0);
                 let frescoPromedio = totalProcesadas > 0 ? (sumFrescoPonderado / totalProcesadas) : 0;
                 let lbsAptasFresco = data.filter(d => d.Perc_Fresco >= 60).reduce((a,b)=> a + b.Libras_Procesadas, 0);
 
-                // KPI 3: Merma / Basura en Recepción (%)
                 let pctBasuraTotal = totalRecibidas > 0 ? (totalBasura / totalRecibidas) * 100 : 0;
 
                 document.getElementById('kpi-rendimiento').innerText = rndIndustrial.toFixed(1) + "%";
-                
                 document.getElementById('kpi-fresco').innerText = frescoPromedio.toFixed(1) + "%";
                 document.getElementById('kpi-fresco-sub').innerText = lbsAptasFresco.toLocaleString('en-US', {maximumFractionDigits:0}) + " lbs con Fresco ≥60%";
-                
                 document.getElementById('kpi-basura').innerText = pctBasuraTotal.toFixed(2) + "%";
                 document.getElementById('kpi-basura-sub').innerText = totalBasura.toLocaleString('en-US', {maximumFractionDigits:0}) + " lbs descartadas en recepción";
-
                 document.getElementById('kpi-procesadas').innerText = totalProcesadas.toLocaleString('en-US', {maximumFractionDigits:0});
                 document.getElementById('kpi-valor').innerText = "Valor Liq: $" + totalValor.toLocaleString('en-US', {maximumFractionDigits:0});
 
@@ -852,7 +895,6 @@
                     }
                 });
 
-                // --- PESTAÑA 2: MATRIZ ORGANOLÉPTICA ---
                 let cls = { A:{lbs:0}, B:{lbs:0}, C:{lbs:0}, D:{lbs:0} };
                 data.forEach(d => {
                     if(d.Clase_Valida === 'A') cls.A.lbs += d.Libras_Procesadas;
@@ -894,7 +936,6 @@
                     </tr>
                 `;
 
-                // TABLA 2: MAPA DE CALOR (SABORES CONSOLIDADOS EN ENTERO + BRANQUIAS SEPARADAS)
                 let arrLotes = [...data].sort((a,b) => b.Libras_Procesadas - a.Libras_Procesadas);
                 document.getElementById('tbody-calor').innerHTML = arrLotes.map(d => {
                     let fr = d.Perc_Fresco || 0;
@@ -941,7 +982,6 @@
                     </tr>`;
                 }).join('');
 
-                // --- PESTAÑA 3: RANKING GENERAL ---
                 let provs = {};
                 data.forEach(d => {
                     let p = d.Camaronera_Oficial || "Desconocida";
@@ -998,7 +1038,6 @@
                     </tr>
                 `).join('');
 
-                // --- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE ---
                 renderSaboresTab(data, activePlugins);
 
             } catch(error) {
