@@ -162,7 +162,7 @@
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800">MAPA DE CALOR POR LOTE, CAMARONERA Y PISCINA</h2>
-                        <p class="text-xs text-slate-500">Desglose individual de defectos, sabores a combustible (CML/CL/CF/Cola), tierra y branquias por lote</p>
+                        <p class="text-xs text-slate-500">Desglose individual de defectos, sabores a combustible/gasolina (incluye registros declarados como "Otros"), tierra y branquias</p>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto">
                         <input type="text" id="searchCalor" onkeyup="filterCalorTable()" placeholder="Buscar Lote, Fecha o Proveedor..." class="border border-slate-300 rounded px-3 py-2 text-sm w-full">
@@ -181,16 +181,16 @@
                                 <th>% Fresco y Sano</th>
                                 <th>Metabisulfito</th>
                                 <th class="bg-emerald-800 text-white">Sabor Caract. %</th>
-                                <!-- DESGLOSE COMBUSTIBLE -->
-                                <th class="bg-indigo-800 text-white" title="Sabor Combustible Entero Muy Leve %">Comb. CML %</th>
-                                <th class="bg-indigo-800 text-white" title="Sabor Combustible Entero Leve %">Comb. CL %</th>
-                                <th class="bg-indigo-900 text-white" title="Sabor Combustible Entero Fuerte %">Comb. CF %</th>
-                                <th class="bg-purple-800 text-white" title="Suma Sabor Combustible en Cola (Fuerte + Leve + Muy Leve)">Comb. Cola %</th>
+                                <!-- DESGLOSE COMBUSTIBLE / GASOLINA (COMBUSTIBLE + OTROS) -->
+                                <th class="bg-indigo-800 text-white" title="Sabor Combustible/Gasolina Entero Muy Leve % (Combustible + Otros)">Comb. CML %</th>
+                                <th class="bg-indigo-800 text-white" title="Sabor Combustible/Gasolina Entero Leve % (Combustible + Otros)">Comb. CL %</th>
+                                <th class="bg-indigo-900 text-white" title="Sabor Combustible/Gasolina Entero Fuerte % (Combustible + Otros)">Comb. CF %</th>
+                                <th class="bg-purple-800 text-white" title="Suma Sabor Combustible/Gasolina en Cola (Combustible + Otros)">Comb. Cola %</th>
                                 <!-- TIERRA Y OTROS -->
                                 <th class="bg-slate-700 text-white">Tierra TML %</th>
                                 <th class="bg-slate-700 text-white">Tierra TL %</th>
                                 <th class="bg-slate-700 text-white">Tierra TF %</th>
-                                <th class="bg-slate-700 text-white" title="Choclo + Gallinaza + Mangle + Otros (Entero)">Otros Sabores %</th>
+                                <th class="bg-slate-700 text-white" title="Choclo + Gallinaza + Mangle (Entero)">Otros Sabores %</th>
                                 <th>Mancha L/F %</th>
                                 <th>Bact. Leve %</th>
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Muy Leves">Branq. BOML %</th>
@@ -248,7 +248,7 @@
                     <p class="text-xs text-slate-400 mt-1" id="kpi-sab-caract-sub">Ponderado por libras enteras</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-indigo-600">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Incidencia Sabor Combustible</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Sabor Combustible / Gasolina</p>
                     <h3 class="text-2xl font-black text-indigo-700 mt-1" id="kpi-sab-comb">0%</h3>
                     <p class="text-xs text-rose-600 font-semibold mt-1" id="kpi-sab-comb-sub">0 lotes afectados (0 lbs)</p>
                 </div>
@@ -258,9 +258,9 @@
                     <p class="text-xs text-slate-400 mt-1" id="kpi-sab-tierra-sub">TML + TL + TF (Entero)</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Otros Sabores (Choclo/Mangle/Gall.)</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Choclo / Mangle / Gallinaza</p>
                     <h3 class="text-2xl font-black text-rose-600 mt-1" id="kpi-sab-otros">0%</h3>
-                    <p class="text-xs text-slate-400 mt-1" id="kpi-sab-otros-sub">Defectos secundarios entero</p>
+                    <p class="text-xs text-slate-400 mt-1" id="kpi-sab-otros-sub">Defectos vegetales/orgánicos</p>
                 </div>
             </div>
 
@@ -268,11 +268,11 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
                     <h4 class="text-sm font-bold text-slate-700 mb-1">Distribución Global de Perfiles de Sabor (Entero)</h4>
-                    <p class="text-xs text-slate-400 mb-4">Participación ponderada por libras evaluadas en planta</p>
+                    <p class="text-xs text-slate-400 mb-4">Participación ponderada por libras (incluye "Otros" como Combustible/Gasolina)</p>
                     <div class="relative h-72 w-full"><canvas id="chartSaboresPie"></canvas></div>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
-                    <h4 class="text-sm font-bold text-slate-700 mb-1">Top Camaroneras con Incidencia de Sabor a Combustible</h4>
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">Top Camaroneras con Sabor a Combustible / Gasolina</h4>
                     <p class="text-xs text-slate-400 mb-4">Desglose por nivel de intensidad (Muy Leve, Leve, Fuerte y Cola)</p>
                     <div class="relative h-72 w-full"><canvas id="chartCombustibleSeveridad"></canvas></div>
                 </div>
@@ -283,13 +283,13 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                     <div>
                         <h4 class="text-sm font-bold text-slate-700">Tendencia Temporal de Incidencia de Sabores Atípicos por Fecha</h4>
-                        <p class="text-xs text-slate-400">Eje X: Fecha de llegada a planta | Identifica los días con mayor pico de sabores no característicos</p>
+                        <p class="text-xs text-slate-400">Eje X: Fecha de llegada a planta | Identifica los días con mayor pico de sabor a gasolina/combustible y otros</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600">Vista de Tendencia:</label>
                         <select id="trendModeSelect" onchange="renderDashboard()" class="border border-slate-300 rounded px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-50">
-                            <option value="ALL_DEFECTS">Todos los Sabores Atípicos (Combustible, Tierra, Choclo, Mangle, Otros)</option>
-                            <option value="ONLY_FUEL">Solo Desglose Combustible (CML, CL, CF y Cola)</option>
+                            <option value="ALL_DEFECTS">Todos los Sabores Atípicos (Combustible/Gasolina, Tierra, Choclo, Mangle, Gallinaza)</option>
+                            <option value="ONLY_FUEL">Solo Desglose Combustible / Gasolina (CML, CL, CF y Cola)</option>
                         </select>
                     </div>
                 </div>
@@ -301,7 +301,7 @@
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800 uppercase">Ranking de Proveedores por Calidad de Sabor (Mejor a Peor)</h2>
-                        <p class="text-xs text-slate-500">Clasificado por mayor % Sabor Característico y penalizado por presencia de Sabor a Combustible</p>
+                        <p class="text-xs text-slate-500">Clasificado por mayor % Sabor Característico y penalizado por presencia de Sabor a Combustible / Gasolina</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -313,14 +313,14 @@
                                 <th>Lotes Eval.</th>
                                 <th>Lotes c/ Comb.</th>
                                 <th class="bg-emerald-800">% Sabor Caract.</th>
-                                <th class="bg-indigo-800">% Comb. Total (Ent.)</th>
+                                <th class="bg-indigo-800">% Comb./Gas. Total</th>
                                 <th class="bg-indigo-700">% Comb. CML</th>
                                 <th class="bg-indigo-700">% Comb. CL</th>
                                 <th class="bg-indigo-900">% Comb. CF</th>
                                 <th class="bg-purple-800">% Comb. Cola</th>
                                 <th>% Tierra Total</th>
                                 <th>% Choclo</th>
-                                <th>% Mangle/Gall/Otros</th>
+                                <th>% Mangle/Gallinaza</th>
                                 <th>Estado Sensorial</th>
                             </tr>
                         </thead>
@@ -541,7 +541,6 @@
                             Gallinaza_Total: 0,
                             Mangle_Total: 0,
                             Otros_Sabores: 0,
-                            Otros_Puro: 0,
                             BOML: 0, BOL: 0, BOF: 0
                         });
                     }
@@ -603,15 +602,25 @@
                         l.TL = parseNum(getVal(row, ['Sabor tierra entero leve %']));
                         l.TF = parseNum(getVal(row, ['Sabor tierra entero fuerte %']));
                         
-                        l.CML = parseNum(getVal(row, ['Sabor combustible entero muy leve %']));
-                        l.CL = parseNum(getVal(row, ['Sabor combustible entero leve %']));
-                        l.CF = parseNum(getVal(row, ['Sabor combustible entero fuerte %']));
+                        // REGLA DE PLANTA: Los sabores registrados como "Otros" corresponden mayoritariamente a gasolina/combustible.
+                        // Se suman directamente a Combustible por nivel de intensidad (Entero y Cola).
+                        let otML = parseNum(getVal(row, ['Sabor otros entero muy leve %']));
+                        let otL  = parseNum(getVal(row, ['Sabor otros entero leve %']));
+                        let otF  = parseNum(getVal(row, ['Sabor otros entero fuerte %']));
 
-                        let ccf = parseNum(getVal(row, ['Sabor combustible cola fuerte %']));
-                        let ccl = parseNum(getVal(row, ['Sabor combustible cola leve %']));
+                        l.CML = parseNum(getVal(row, ['Sabor combustible entero muy leve %'])) + otML;
+                        l.CL  = parseNum(getVal(row, ['Sabor combustible entero leve %'])) + otL;
+                        l.CF  = parseNum(getVal(row, ['Sabor combustible entero fuerte %'])) + otF;
+
+                        let ccf  = parseNum(getVal(row, ['Sabor combustible cola fuerte %']));
+                        let ccl  = parseNum(getVal(row, ['Sabor combustible cola leve %']));
                         let ccml = parseNum(getVal(row, ['Sabor combustible cola muy leve %']));
-                        l.Comb_Cola = ccf + ccl + ccml;
+                        let otColaF  = parseNum(getVal(row, ['Sabor otros cola fuerte %']));
+                        let otColaL  = parseNum(getVal(row, ['Sabor otros cola leve %']));
+                        let otColaML = parseNum(getVal(row, ['Sabor otros cola muy leve %']));
+                        l.Comb_Cola = ccf + ccl + ccml + otColaF + otColaL + otColaML;
 
+                        // Sabores vegetales/orgánicos restantes (Choclo, Gallinaza, Mangle)
                         let chF = parseNum(getVal(row, ['Sabor choclo entero fuerte %']));
                         let chL = parseNum(getVal(row, ['Sabor choclo entero leve %']));
                         let chML = parseNum(getVal(row, ['Sabor choclo entero muy leve %']));
@@ -627,12 +636,7 @@
                         let maML = parseNum(getVal(row, ['Sabor mangle entero muy leve %']));
                         l.Mangle_Total = maF + maL + maML;
 
-                        let otF = parseNum(getVal(row, ['Sabor otros entero fuerte %']));
-                        let otL = parseNum(getVal(row, ['Sabor otros entero leve %']));
-                        let otML = parseNum(getVal(row, ['Sabor otros entero muy leve %']));
-                        l.Otros_Puro = otF + otL + otML;
-
-                        l.Otros_Sabores = l.Choclo_Total + l.Gallinaza_Total + l.Mangle_Total + l.Otros_Puro;
+                        l.Otros_Sabores = l.Choclo_Total + l.Gallinaza_Total + l.Mangle_Total;
                     }
                 });
 
@@ -871,7 +875,7 @@
                     </tr>
                     <tr class="bg-indigo-50/40">
                         <td class="font-bold text-indigo-800">CLASE D</td>
-                        <td colspan="4" class="text-indigo-700 font-semibold text-center">Presencia de Sabor Combustible / Diesel (CML, CL o CF &gt; 0%)</td>
+                        <td colspan="4" class="text-indigo-700 font-semibold text-center">Presencia de Sabor Combustible / Gasolina (CML, CL o CF &gt; 0%)</td>
                         <td class="font-bold text-indigo-800">${cls.D.lbs.toLocaleString('en-US',{maximumFractionDigits:0})} lb (${((cls.D.lbs/totValidas)*100).toFixed(1)}%)</td>
                     </tr>
                 `;
@@ -1000,7 +1004,7 @@
 
         function renderSaboresTab(data, activePlugins) {
             let lbsEvalTotal = 0;
-            let sumCaract = 0, sumComb = 0, sumTierra = 0, sumChoclo = 0, sumGallinaza = 0, sumMangle = 0, sumOtrosPuro = 0;
+            let sumCaract = 0, sumComb = 0, sumTierra = 0, sumChoclo = 0, sumGallinaza = 0, sumMangle = 0;
             let lotesConCombustible = 0;
             let lbsConCombustible = 0;
 
@@ -1019,7 +1023,6 @@
                     sumChoclo += d.Choclo_Total * peso;
                     sumGallinaza += d.Gallinaza_Total * peso;
                     sumMangle += d.Mangle_Total * peso;
-                    sumOtrosPuro += d.Otros_Puro * peso;
                 }
 
                 if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) {
@@ -1050,7 +1053,7 @@
                     p.cf += d.CF * peso;
                     p.tierra += d.Tierra_Entero_Total * peso;
                     p.choclo += d.Choclo_Total * peso;
-                    p.otrosMG += (d.Gallinaza_Total + d.Mangle_Total + d.Otros_Puro) * peso;
+                    p.otrosMG += (d.Gallinaza_Total + d.Mangle_Total) * peso;
                 }
 
                 // Agrupación por Fecha de Llegada a Planta para Tendencia
@@ -1060,7 +1063,7 @@
                             fecha: d.Fecha_ISO, 
                             pesoEntero: 0, pesoTotal: 0,
                             combEnt: 0, cml: 0, cl: 0, cf: 0, combCola: 0,
-                            tierra: 0, choclo: 0, mangle: 0, otrosMG: 0,
+                            tierra: 0, choclo: 0, mangle: 0, gallinaza: 0,
                             lotesComb: 0, lotesTotal: 0
                         };
                     }
@@ -1079,7 +1082,7 @@
                         t.tierra += d.Tierra_Entero_Total * peso;
                         t.choclo += d.Choclo_Total * peso;
                         t.mangle += d.Mangle_Total * peso;
-                        t.otrosMG += (d.Gallinaza_Total + d.Otros_Puro) * peso;
+                        t.gallinaza += d.Gallinaza_Total * peso;
                     }
                 }
             });
@@ -1091,8 +1094,7 @@
             let pctChoclo = sumChoclo / div;
             let pctGallinaza = sumGallinaza / div;
             let pctMangle = sumMangle / div;
-            let pctOtrosPuro = sumOtrosPuro / div;
-            let pctOtrosTot = pctChoclo + pctGallinaza + pctMangle + pctOtrosPuro;
+            let pctOtrosTot = pctChoclo + pctGallinaza + pctMangle;
 
             document.getElementById('kpi-sab-caract').innerText = pctCaract.toFixed(1) + "%";
             document.getElementById('kpi-sab-comb').innerText = pctComb.toFixed(2) + "%";
@@ -1105,10 +1107,10 @@
                 type: 'doughnut',
                 plugins: activePlugins,
                 data: {
-                    labels: ['Característico', 'Tierra', 'Combustible', 'Choclo', 'Mangle', 'Gallinaza', 'Otros'],
+                    labels: ['Característico', 'Tierra', 'Combustible / Gasolina', 'Choclo', 'Mangle', 'Gallinaza'],
                     datasets: [{
-                        data: [pctCaract, pctTierra, pctComb, pctChoclo, pctMangle, pctGallinaza, pctOtrosPuro],
-                        backgroundColor: ['#10b981', '#f59e0b', '#4f46e5', '#eab308', '#8b5cf6', '#ec4899', '#64748b'],
+                        data: [pctCaract, pctTierra, pctComb, pctChoclo, pctMangle, pctGallinaza],
+                        backgroundColor: ['#10b981', '#f59e0b', '#4f46e5', '#eab308', '#8b5cf6', '#ec4899'],
                         borderWidth: 2
                     }]
                 },
@@ -1160,7 +1162,7 @@
                 return b.pctCaract - a.pctCaract;
             });
 
-            // 2. Gráfico de Barras Apiladas: Top Camaroneras con Combustible
+            // 2. Gráfico de Barras Apiladas: Top Camaroneras con Combustible / Gasolina
             let topComb = [...rankSabores]
                 .filter(r => (r.pctCombEnt + r.pctCombCola) > 0)
                 .sort((a, b) => (b.pctCombEnt + b.pctCombCola) - (a.pctCombEnt + a.pctCombCola))
@@ -1171,10 +1173,10 @@
                 data: {
                     labels: topComb.length > 0 ? topComb.map(c => c.nombre) : ['Sin incidencia de combustible'],
                     datasets: [
-                        { label: 'Comb. Muy Leve (CML)', data: topComb.map(c => c.pctCML), backgroundColor: '#818cf8' },
-                        { label: 'Comb. Leve (CL)', data: topComb.map(c => c.pctCL), backgroundColor: '#4f46e5' },
-                        { label: 'Comb. Fuerte (CF)', data: topComb.map(c => c.pctCF), backgroundColor: '#e11d48' },
-                        { label: 'Comb. Cola', data: topComb.map(c => c.pctCombCola), backgroundColor: '#9333ea' }
+                        { label: 'Comb./Gas. Muy Leve (CML)', data: topComb.map(c => c.pctCML), backgroundColor: '#818cf8' },
+                        { label: 'Comb./Gas. Leve (CL)', data: topComb.map(c => c.pctCL), backgroundColor: '#4f46e5' },
+                        { label: 'Comb./Gas. Fuerte (CF)', data: topComb.map(c => c.pctCF), backgroundColor: '#e11d48' },
+                        { label: 'Comb./Gas. Cola', data: topComb.map(c => c.pctCombCola), backgroundColor: '#9333ea' }
                     ]
                 },
                 options: {
@@ -1197,7 +1199,7 @@
             if (trendMode === 'ONLY_FUEL') {
                 trendDatasets = [
                     {
-                        label: 'Comb. Fuerte (CF %)',
+                        label: 'Comb./Gas. Fuerte (CF %)',
                         data: trendArr.map(t => t.pesoEntero > 0 ? +(t.cf / t.pesoEntero).toFixed(2) : 0),
                         borderColor: '#e11d48',
                         backgroundColor: 'rgba(225, 29, 72, 0.15)',
@@ -1206,7 +1208,7 @@
                         fill: true
                     },
                     {
-                        label: 'Comb. Leve (CL %)',
+                        label: 'Comb./Gas. Leve (CL %)',
                         data: trendArr.map(t => t.pesoEntero > 0 ? +(t.cl / t.pesoEntero).toFixed(2) : 0),
                         borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.12)',
@@ -1215,7 +1217,7 @@
                         fill: true
                     },
                     {
-                        label: 'Comb. Muy Leve (CML %)',
+                        label: 'Comb./Gas. Muy Leve (CML %)',
                         data: trendArr.map(t => t.pesoEntero > 0 ? +(t.cml / t.pesoEntero).toFixed(2) : 0),
                         borderColor: '#818cf8',
                         backgroundColor: 'transparent',
@@ -1224,7 +1226,7 @@
                         tension: 0.3
                     },
                     {
-                        label: 'Comb. en Cola (%)',
+                        label: 'Comb./Gas. en Cola (%)',
                         data: trendArr.map(t => t.pesoTotal > 0 ? +(t.combCola / t.pesoTotal).toFixed(2) : 0),
                         borderColor: '#9333ea',
                         backgroundColor: 'transparent',
@@ -1235,7 +1237,7 @@
             } else {
                 trendDatasets = [
                     {
-                        label: 'Sabor Combustible Total (%)',
+                        label: 'Combustible / Gasolina (%)',
                         data: trendArr.map(t => t.pesoEntero > 0 ? +(t.combEnt / t.pesoEntero).toFixed(2) : 0),
                         borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.15)',
@@ -1270,8 +1272,8 @@
                         tension: 0.3
                     },
                     {
-                        label: 'Gallinaza / Otros (%)',
-                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.otrosMG / t.pesoEntero).toFixed(2) : 0),
+                        label: 'Gallinaza (%)',
+                        data: trendArr.map(t => t.pesoEntero > 0 ? +(t.gallinaza / t.pesoEntero).toFixed(2) : 0),
                         borderColor: '#ec4899',
                         backgroundColor: 'transparent',
                         borderWidth: 2,
@@ -1307,7 +1309,7 @@
                                 afterBody: (items) => {
                                     let idx = items[0].dataIndex;
                                     let info = trendArr[idx];
-                                    return `\nLotes recibidos ese día: ${info.lotesTotal}\nLotes con combustible: ${info.lotesComb}`;
+                                    return `\nLotes recibidos ese día: ${info.lotesTotal}\nLotes con combustible/gasolina: ${info.lotesComb}`;
                                 }
                             }
                         }
