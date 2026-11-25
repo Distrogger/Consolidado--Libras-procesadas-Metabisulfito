@@ -375,43 +375,80 @@
             return undefined;
         }
 
-        function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
-            let finalPis = (pisSab || pisOmi || "").toString().trim().toUpperCase();
-            let genericName = "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS";
-            
-            const mapeoPiscinaCamaronera = {
-                "P1010": "Puerto Inca 1",
-                "932": "Camaronera Puna",
-                "293": "Camaronera Puna",
-                "897": "Camaronera Puna",
-                "75":  "Camaronera Cachugran",
-                "421": "Camaronera Chongon",
-                "845": "Camaronera Puna",
-                "868": "Camaronera Puna",
-                "848": "Camaronera Puna"
-            };
+function normalizeCamaroneraName(name) {
+    if (!name) return "Desconocida";
+    // Eliminar puntos, comas y espacios múltiples, y pasar a mayúsculas para comparar
+    let clean = name.replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+    let upper = clean.toUpperCase();
 
-            if (mapeoPiscinaCamaronera[finalPis]) return mapeoPiscinaCamaronera[finalPis];
-            if (finalPis.startsWith("PU") && finalPis.length >= 3) return "Puerto Inca " + finalPis.charAt(2);
-            if (finalPis.startsWith("PD")) return "Puna 2";
-            if (finalPis.startsWith("PT")) return "Taura";
+    // Unificar casos específicos detectados
+    if (upper.startsWith("OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS")) {
+        return "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS OMARSA S.A.";
+    }
+    if (upper === "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA SA") {
+        return "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA S.A.";
+    }
+    if (upper === "PESQUERA MARYCIELO CIA LTDA") {
+        return "PESQUERA MARYCIELO CIA. LTDA.";
+    }
 
-            let finalCam = camOmi || "Desconocida";
-            if (camSab && !camSab.toUpperCase().includes(genericName)) {
-                finalCam = camSab;
-            } else if (camOmi && !camOmi.toUpperCase().includes(genericName) && (!camSab || camSab.toUpperCase().includes(genericName))) {
-                finalCam = camOmi;
-            } else if (camSab) {
-                finalCam = camSab;
+    // Para cualquier otro proveedor, devolver sin puntos ni espacios extra para evitar futuros duplicados
+    return clean;
+}
+
+function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
+    let finalPis = (pisSab || pisOmi || "").toString().trim().toUpperCase();
+    let genericName = "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS";
+
+    // 1. Obtener el nombre real directamente de la columna Camaronera
+    let rawCam = "Desconocida";
+    if (camSab && camSab.trim() !== "" && !camSab.toUpperCase().includes(genericName)) {
+        rawCam = camSab.trim();
+    } else if (camOmi && camOmi.trim() !== "" && !camOmi.toUpperCase().includes(genericName)) {
+        rawCam = camOmi.trim();
+    } else if (camSab && camSab.trim() !== "") {
+        rawCam = camSab.trim();
+    } else if (camOmi && camOmi.trim() !== "") {
+        rawCam = camOmi.trim();
+    }
+
+    // Normalizar puntuación y alias antes de evaluar reglas
+    let finalCam = normalizeCamaroneraName(rawCam);
+    let camUpper = finalCam.toUpperCase();
+
+    // 2. Activar reglas de piscina ÚNICAMENTE si la camaronera es "Camaronera Puna"
+    if (camUpper === "CAMARONERA PUNA" || camUpper.includes("CAMARONERA PUNA")) {
+        // Regla Puerto Inca (PU1 -> Puerto Inca 1, PU2 -> Puerto Inca 2, PU3 -> Puerto Inca 3, PU4 -> Puerto Inca 4)
+        if (finalPis.startsWith("PU") && finalPis.length >= 3) {
+            let numInca = finalPis.charAt(2);
+            if (["1", "2", "3", "4"].includes(numInca)) {
+                return "Puerto Inca " + numInca;
             }
-
-            if (finalCam.toUpperCase().includes(genericName) || finalCam.toUpperCase().includes("OMARSA S.A.")) {
-                 if(finalPis) return "Omarsa - Piscina " + finalPis;
-                 return "Omarsa (Genérico)";
-            }
-
-            return finalCam;
         }
+
+        // Regla Puna 2: Prefijo PD (ej. PD100, PD305, etc.)
+        if (finalPis.startsWith("PD")) {
+            return "Puna 2";
+        }
+
+        // Regla Puna: Centenas 200, 800 y 900 (o cualquier otra piscina sin PU/PD bajo Camaronera Puna)
+        let numMatch = finalPis.match(/\d+/);
+        let pisNum = numMatch ? parseInt(numMatch[0], 10) : NaN;
+
+        if (!isNaN(pisNum) && (
+            (pisNum >= 200 && pisNum <= 299) ||
+            (pisNum >= 800 && pisNum <= 899) ||
+            (pisNum >= 900 && pisNum <= 999)
+        )) {
+            return "Puna";
+        }
+
+        return "Puna";
+    }
+
+    // 3. Caso contrario: devolver el nombre normalizado sin duplicados
+    return finalCam;
+}
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             let files = e.target.files;
