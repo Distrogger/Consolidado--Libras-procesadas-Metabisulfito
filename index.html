@@ -360,7 +360,7 @@
                 </div>
             </div>
 
-            <!-- Gráficos Analíticos: Rangos de Espera vs Deterioro & Lotes Directos vs Fraccionados -->
+            <!-- Gráficos Analíticos Fila 1: Rangos de Espera vs Deterioro & Lotes Directos vs Fraccionados -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
                     <h4 class="text-sm font-bold text-slate-700 mb-1">Deterioro Post-Cosecha por Rango de Espera Ponderada</h4>
@@ -372,6 +372,20 @@
                     <p class="text-xs text-slate-400 mb-4" id="subtitulo-fraccionamiento">Comparativa de espera real y calidad física entre lotes procesados de corrido vs. partidos</p>
                     <div class="relative h-80 w-full"><canvas id="chartFlujoTurnos"></canvas></div>
                 </div>
+            </div>
+
+            <!-- Gráfico Analítico Fila 2: Dispersión Espera (Horas) vs. % Flácido y Cabeza Floja con Tendencia Lineal -->
+            <div class="bg-slate-900 p-5 rounded-lg shadow-sm border border-slate-800 mb-6 text-white">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+                    <div>
+                        <h4 class="text-base font-bold text-white uppercase tracking-wide">Espera (Horas) vs. % Flácido y Cabeza Floja</h4>
+                        <p class="text-xs text-slate-400">Correlación lote a lote entre horas ponderadas en patio y defectos de textura, con líneas de tendencia lineal</p>
+                    </div>
+                    <div class="text-xs font-mono text-slate-300 bg-slate-800 px-3 py-1.5 rounded border border-slate-700" id="scatter-stats-summary">
+                        Pendiente Flácido: -- | Pendiente Cab. Floja: --
+                    </div>
+                </div>
+                <div class="relative h-80 w-full"><canvas id="chartScatterFlacidez"></canvas></div>
             </div>
 
             <!-- Tabla de Desempeño por Origen (Sin columna de Espera Promedio) -->
@@ -480,7 +494,6 @@
             return { iso: "", display: s, dateObj: null };
         }
 
-        // Conversión de fecha serial Excel + fracción decimal de hora a objeto Date
         function excelSerialToDate(fechaRaw, horaRaw) {
             if (fechaRaw === undefined || fechaRaw === null || fechaRaw.toString().trim() === '') return null;
             let fStr = fechaRaw.toString().replace(/["']/g, '').trim();
@@ -499,7 +512,6 @@
 
             if (!baseDate || isNaN(baseDate.getTime())) return null;
 
-            // Sumar fracción de hora o texto HH:MM(:SS)
             if (horaRaw !== undefined && horaRaw !== null && horaRaw.toString().trim() !== '') {
                 let hStr = horaRaw.toString().replace(/["']/g, '').trim();
                 if (!isNaN(hStr)) {
@@ -521,12 +533,42 @@
         function calcDiffHoras(dtInicio, dtFin) {
             if (!dtInicio || !dtFin) return null;
             let diffHrs = (dtFin.getTime() - dtInicio.getTime()) / (1000 * 60 * 60);
-            // Corrección de cruce de medianoche si la hora de proceso quedó registrada con la misma fecha pero al día siguiente
             if (diffHrs < -2 && diffHrs > -24) {
                 diffHrs += 24;
             }
             if (diffHrs < 0 || diffHrs > 120) return null;
             return diffHrs;
+        }
+
+        // Cálculo de regresión lineal (y = m*x + b) para las líneas de tendencia
+        function calcLinearTrend(points, maxX) {
+            if (!points || points.length < 2) return [];
+            let n = points.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            points.forEach(p => {
+                sumX += p.x;
+                sumY += p.y;
+                sumXY += p.x * p.y;
+                sumXX += p.x * p.x;
+            });
+            let denom = (n * sumXX - sumX * sumX);
+            if (denom === 0) return [];
+            let m = (n * sumXY - sumX * sumY) / denom;
+            let b = (sumY - m * sumX) / n;
+
+            let minX = Math.min(...points.map(p => p.x));
+            let endX = Math.max(maxX, Math.max(...points.map(p => p.x)));
+            let yStart = Math.max(0, m * minX + b);
+            let yEnd = Math.max(0, m * endX + b);
+
+            return {
+                slope: m,
+                intercept: b,
+                linePoints: [
+                    { x: +(minX.toFixed(2)), y: +(yStart.toFixed(2)) },
+                    { x: +(endX.toFixed(2)), y: +(yEnd.toFixed(2)) }
+                ]
+            };
         }
 
         function getVal(row, possibleKeys) {
@@ -729,7 +771,6 @@
                     Mangle_Total: 0,
                     Otros_Sabores: 0,
                     BOML: 0, BOL: 0, BOF: 0,
-                    // Campos de Calidad Detallada (Metabisulfito_Validado)
                     Has_Meta: false,
                     Lbs_Muestreadas_Meta: 0,
                     Perc_Fresco: 0,
@@ -741,7 +782,6 @@
                     Mancha_Leve: 0,
                     Mancha_Fuerte: 0,
                     Bact_Leve: 0,
-                    // Campos de Tiempos y Turnos (INFROMACION RECEPCION)
                     Has_Recepcion: false,
                     Turno_Llegada: "",
                     Lbs_Dia: 0,
@@ -801,7 +841,7 @@
                     }
                     
                     let lbs = parseNum(getVal(row, ['Libras recibidas', 'Libras recibida']));
-                    if (lbs <= 0) lbs = 1; // Respaldo en caso de fila sin peso asignado
+                    if (lbs <= 0) lbs = 1;
                     metaTemp[lote].totalLbs += lbs;
                     metaTemp[lote].frescoSuma += parseNum(getVal(row, ['E. fresco y sano (%)', 'E. fresco y sano'])) * lbs;
                     metaTemp[lote].metaSuma += parseNum(getVal(row, ['Porcentaje de metabisulfito'])) * lbs;
@@ -890,7 +930,7 @@
                     }
                 });
 
-                // 5. INFROMACION RECEPCION (Tiempos de espera en patio y fraccionamiento Día/Noche)
+                // 5. INFROMACION RECEPCION
                 if (db.recepcion && db.recepcion.length > 0) {
                     db.recepcion.forEach(row => {
                         let lote = (getVal(row, ['LOTE', 'Lote']) || '').toString().trim();
@@ -900,7 +940,6 @@
                         let totalRecibido = parseNum(getVal(row, ['TOTAL RECIBIDO']));
                         if (statusPesca === 'CANCELADO' && totalRecibido === 0) return;
 
-                        // Si el lote aún no estaba en OMIPROD pero tiene calidad en Metabisulfito, crearlo para no perder trazabilidad en Pestaña 5
                         if (!lotesMap.has(lote)) {
                             let newL = createEmptyLote(lote);
                             newL.Libras_Recibidas = totalRecibido;
@@ -929,14 +968,12 @@
                         }
                         if (!l.Piscina && piscRec) l.Piscina = piscRec;
 
-                        // Bloque 1: PROCESO TURNO DIA
                         let fechaProcDia = getVal(row, ['FECHA DE PROCESO']);
                         let horaProcDia = getVal(row, ['HORA PROCESO']);
                         let lbsDia = parseNum(getVal(row, ['LBS DIA']));
                         let dtProcDia = excelSerialToDate(fechaProcDia, horaProcDia);
                         let espDia = (lbsDia > 0) ? calcDiffHoras(dtLlegada, dtProcDia) : null;
 
-                        // Bloque 2: PROCESO TURNO NOCHE
                         let fechaProcNoche = getVal(row, ['FECHA DE PROCESO2']);
                         let horaProcNoche = getVal(row, ['HORA PROCESO2']);
                         let lbsNoche = parseNum(getVal(row, ['LBS NOCHE']));
@@ -1337,7 +1374,6 @@
             let turnoFilter = document.getElementById('filterTurnoRecep') ? document.getElementById('filterTurnoRecep').value : 'ALL';
             let flujoFilter = document.getElementById('filterFlujoRecep') ? document.getElementById('filterFlujoRecep').value : 'ALL';
 
-            // Filtrar lotes con calidad muestreada (Metabisulfito_Validado) y aplicar filtros de Recepción si existen
             let lotesCalidad = data.filter(d => {
                 if (!d.Has_Meta) return false;
                 if (turnoFilter !== 'ALL') {
@@ -1511,7 +1547,146 @@
                 }
             });
 
-            // 4. Tabla de Desempeño por Camaronera (Sin columna de Espera Promedio)
+            // 4. Gráfico 3 (Nuevo): Dispersión Espera (Horas) vs. % Flácido y Cabeza Floja con líneas de tendencia
+            let ptsFlacido = [];
+            let ptsCabFloja = [];
+            let maxHora = 24;
+
+            lotesConTiempos.forEach(d => {
+                let hrs = +(d.Espera_Ponderada_Hrs.toFixed(2));
+                if (hrs > maxHora) maxHora = Math.ceil(hrs);
+                let metaInfo = {
+                    lote: d.Lote,
+                    camaronera: d.Camaronera_Oficial,
+                    piscina: d.Piscina || '-',
+                    lbs: d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 0
+                };
+                ptsFlacido.push({ x: hrs, y: +(d.Perc_Flacido.toFixed(2)), ...metaInfo });
+                ptsCabFloja.push({ x: hrs, y: +(d.Perc_Cab_Floja.toFixed(2)), ...metaInfo });
+            });
+
+            let trendFlacido = calcLinearTrend(ptsFlacido, maxHora);
+            let trendCabFloja = calcLinearTrend(ptsCabFloja, maxHora);
+
+            let statsEl = document.getElementById('scatter-stats-summary');
+            if (statsEl) {
+                if (trendFlacido.slope !== undefined && trendCabFloja.slope !== undefined) {
+                    let sFlac = (trendFlacido.slope >= 0 ? '+' : '') + trendFlacido.slope.toFixed(2) + '%/h';
+                    let sCab = (trendCabFloja.slope >= 0 ? '+' : '') + trendCabFloja.slope.toFixed(2) + '%/h';
+                    statsEl.innerText = `Tasa Flácido: ${sFlac} | Tasa Cab. Floja: ${sCab} (${ptsFlacido.length} lotes)`;
+                } else {
+                    statsEl.innerText = `Datos insuficientes para regresión (${ptsFlacido.length} lotes)`;
+                }
+            }
+
+            let scatterDatasets = [
+                {
+                    type: 'scatter',
+                    label: '% Flácido',
+                    data: ptsFlacido,
+                    backgroundColor: '#0284c7',
+                    borderColor: '#38bdf8',
+                    borderWidth: 1,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    order: 2
+                },
+                {
+                    type: 'scatter',
+                    label: '% Cabeza Floja',
+                    data: ptsCabFloja,
+                    backgroundColor: '#ea580c',
+                    borderColor: '#fb923c',
+                    borderWidth: 1,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    order: 2
+                }
+            ];
+
+            if (trendFlacido.linePoints && trendFlacido.linePoints.length === 2) {
+                scatterDatasets.push({
+                    type: 'line',
+                    label: 'Tendencia % Flácido',
+                    data: trendFlacido.linePoints,
+                    borderColor: '#7dd3fc',
+                    borderWidth: 2.5,
+                    borderDash: [6, 5],
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    fill: false,
+                    tension: 0,
+                    order: 1
+                });
+            }
+
+            if (trendCabFloja.linePoints && trendCabFloja.linePoints.length === 2) {
+                scatterDatasets.push({
+                    type: 'line',
+                    label: 'Tendencia % Cabeza Floja',
+                    data: trendCabFloja.linePoints,
+                    borderColor: '#fdba74',
+                    borderWidth: 2.5,
+                    borderDash: [6, 5],
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    fill: false,
+                    tension: 0,
+                    order: 1
+                });
+            }
+
+            createChart('chartScatterFlacidez', {
+                type: 'scatter',
+                data: { datasets: scatterDatasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: true },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: 0,
+                            suggestedMax: maxHora,
+                            ticks: { color: '#cbd5e1', stepSize: 2 },
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            title: { display: true, text: 'Horas de Espera', color: '#f1f5f9', font: { weight: 'bold', size: 12 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#cbd5e1' },
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            title: { display: true, text: '% Defectos', color: '#f1f5f9', font: { weight: 'bold', size: 12 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#f1f5f9',
+                                usePointStyle: true,
+                                filter: (item) => !item.text.startsWith('Tendencia')
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    let raw = ctx.raw;
+                                    if (!raw.lote) return `${ctx.dataset.label}: ${raw.y}% (${raw.x} h)`;
+                                    return [
+                                        `${ctx.dataset.label}: ${raw.y.toFixed(1)}% | Espera: ${raw.x.toFixed(1)} h`,
+                                        `Lote: ${raw.lote} (${raw.camaronera} - Pisc. ${raw.piscina})`,
+                                        `Libras Muestreadas: ${raw.lbs.toLocaleString('en-US', {maximumFractionDigits: 0})} lb`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 5. Tabla de Desempeño por Camaronera (Sin columna de Espera Promedio)
             let provRecep = {};
             lotesCalidad.forEach(d => {
                 let cam = d.Camaronera_Oficial || "Desconocida";
