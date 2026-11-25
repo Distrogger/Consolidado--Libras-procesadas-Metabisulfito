@@ -37,7 +37,7 @@
     <header class="bg-white shadow-sm px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-50">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Análisis de Calidad y Rendimiento Industrial</h1>
-            <p class="text-sm text-slate-500">Integración: Liquidación (OMIPROD), Defectos, Organoléptico, Sabores y Branquias</p>
+            <p class="text-sm text-slate-500">Integración: Liquidación (OMIPROD), Defectos, Organoléptico, Sabores, Branquias y Tiempos en Patio</p>
         </div>
         <div class="flex items-center gap-3">
             <label class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md cursor-pointer text-sm transition font-semibold">
@@ -54,6 +54,7 @@
             <li><button class="tab-btn py-4 hover:text-slate-800 transition" onclick="openTab(event, 'tab2')">2. Matriz Organoléptica y Lotes</button></li>
             <li><button class="tab-btn py-4 hover:text-slate-800 transition" onclick="openTab(event, 'tab3')">3. Ranking General de Proveedores</button></li>
             <li><button class="tab-btn py-4 hover:text-indigo-700 text-indigo-600 transition flex items-center gap-1.5" onclick="openTab(event, 'tab4')"><i class="fa-solid fa-flask-vial"></i> 4. Análisis de Sabores y Combustible</button></li>
+            <li><button class="tab-btn py-4 hover:text-teal-700 text-teal-600 transition flex items-center gap-1.5" onclick="openTab(event, 'tab5')"><i class="fa-solid fa-stopwatch"></i> 5. Tiempos de Espera y Calidad</button></li>
         </ul>
     </nav>
 
@@ -170,13 +171,11 @@
                                 <th>Libras Proc.</th>
                                 <th>Metabisulfito</th>
                                 <th class="bg-emerald-800 text-white">Sabor Caract. %</th>
-                                <!-- SABORES CONSOLIDADOS (SOLO ENTERO) -->
                                 <th class="bg-indigo-800 text-white" title="Total Sabor Combustible Entero % (CML + CL + CF + Otros)">Combustible %</th>
                                 <th class="bg-slate-700 text-white" title="Total Sabor Tierra Entero % (TML + TL + TF)">Tierra %</th>
                                 <th class="bg-slate-700 text-white" title="Total Choclo + Gallinaza + Mangle (Entero)">Otros Sabores %</th>
                                 <th>Mancha L/F %</th>
                                 <th>Bact. Leve %</th>
-                                <!-- BRANQUIAS OSCURAS SEPARADAS -->
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Muy Leves">Branq. BOML %</th>
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Leves">Branq. BOL %</th>
                                 <th class="bg-amber-700 text-white" title="Branquias Oscuras Fuertes">Branq. BOF %</th>
@@ -223,7 +222,6 @@
 
         <!-- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE -->
         <section id="tab4" class="tab-content">
-            <!-- KPIs de Sabores (Calculados sobre Libras recibidas total) -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
                     <p class="text-xs text-slate-500 font-bold uppercase">Sabor Característico</p>
@@ -247,7 +245,6 @@
                 </div>
             </div>
 
-            <!-- Fila 1 de Gráficos: Pastel de Distribución + Barras Únicas de Top Camaroneras con Combustible -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
                     <h4 class="text-sm font-bold text-slate-700 mb-1">Distribución Global de Perfiles de Sabor (Sobre Libras Recibidas)</h4>
@@ -261,7 +258,6 @@
                 </div>
             </div>
 
-            <!-- Fila 2 de Gráficos: Tendencia Histórica de Mayor Incidencia en Sabores -->
             <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                     <div>
@@ -279,7 +275,6 @@
                 <div class="relative h-72 w-full"><canvas id="chartSaboresTrend"></canvas></div>
             </div>
 
-            <!-- Matriz Ranking de Proveedores por Sabores -->
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <div>
@@ -313,6 +308,101 @@
                 </div>
             </div>
         </section>
+
+        <!-- PESTAÑA 5: TIEMPOS DE ESPERA EN PATIO Y CALIDAD DE RECEPCIÓN -->
+        <section id="tab5" class="tab-content">
+            <!-- Sub-barra de filtros operativos exclusivos de Recepción y Turnos -->
+            <div class="bg-white p-3.5 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 uppercase"><i class="fa-solid fa-clock mr-1 text-teal-600"></i> Turno Llegada:</label>
+                        <select id="filterTurnoRecep" onchange="renderDashboard()" class="border border-slate-300 rounded px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-50">
+                            <option value="ALL">Todos (Día y Noche)</option>
+                            <option value="DIA">Turno Día</option>
+                            <option value="NOCHE">Turno Noche</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 uppercase"><i class="fa-solid fa-code-branch mr-1 text-indigo-600"></i> Flujo de Proceso:</label>
+                        <select id="filterFlujoRecep" onchange="renderDashboard()" class="border border-slate-300 rounded px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-50">
+                            <option value="ALL">Todos los Lotes</option>
+                            <option value="DIRECTO">Lotes Directos (1 Solo Turno)</option>
+                            <option value="FRACCIONADO">Lotes Fraccionados (Día + Noche)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="text-xs font-semibold text-teal-800 bg-teal-50 px-3 py-1.5 rounded-md border border-teal-200" id="recep-cruce-summary">
+                    Lotes cruzados con Recepción y Calidad: 0
+                </div>
+            </div>
+
+            <!-- 4 Tarjetas KPI de Tiempos y Deterioro -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-teal-600">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Espera Ponderada Promedio</p>
+                    <h3 class="text-2xl font-black text-teal-700 mt-1" id="kpi-esp-ponderada">0.0 h</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-esp-primer">1er Ingreso Prom: 0.0 h</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Fresco y Sano (Recepción)</p>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-1" id="kpi-cal-fresco">0.0%</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-cal-fresco-sub">Ponderado por libras muestreadas</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-amber-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Flácido + Cabeza Floja</p>
+                    <h3 class="text-2xl font-black text-amber-600 mt-1" id="kpi-cal-flac-cf">0.0%</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-cal-flac-cf-sub">Flácido: 0.0% | Cab. Floja: 0.0%</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-rose-600">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Cab. Desprendida + Melanosis</p>
+                    <h3 class="text-2xl font-black text-rose-600 mt-1" id="kpi-cal-cd-mel">0.0%</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-cal-cd-mel-sub">Cab. Desp: 0.0% | Melanosis: 0.0%</p>
+                </div>
+            </div>
+
+            <!-- Gráficos Analíticos: Rangos de Espera vs Deterioro & Lotes Directos vs Fraccionados -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">Deterioro Post-Cosecha por Rango de Espera Ponderada</h4>
+                    <p class="text-xs text-slate-400 mb-4">Evolución ponderada de parámetros físicos según exposición en patio (&lt;4h, 4-8h, 8-12h, &gt;12h)</p>
+                    <div class="relative h-80 w-full"><canvas id="chartEsperaRangos"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">Impacto de Programación: Lotes Directos vs. Fraccionados (Día/Noche)</h4>
+                    <p class="text-xs text-slate-400 mb-4" id="subtitulo-fraccionamiento">Comparativa de espera real y calidad física entre lotes procesados de corrido vs. partidos</p>
+                    <div class="relative h-80 w-full"><canvas id="chartFlujoTurnos"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Tabla de Desempeño por Origen (Sin columna de Espera Promedio) -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 uppercase">Desempeño Físico de Recepción por Camaronera / Proveedor</h2>
+                        <p class="text-xs text-slate-500">Porcentajes ponderados por libras recibidas en muestreos de calidad (Metabisulfito_Validado)</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full gerencial-table whitespace-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Pos.</th>
+                                <th>Camaronera / Proveedor</th>
+                                <th>Lotes Eval.</th>
+                                <th>Libras Recibidas</th>
+                                <th class="bg-emerald-800">% Fresco y Sano</th>
+                                <th class="bg-amber-700">% Flácido</th>
+                                <th class="bg-amber-800">% Cabeza Floja</th>
+                                <th class="bg-rose-800">% Cabeza Desprendida</th>
+                                <th class="bg-indigo-800">% Melanosis</th>
+                                <th>Condición Física</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-recep-proveedores"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
@@ -332,7 +422,7 @@
             renderDashboard(); 
         }
 
-        let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], consolidado: [] };
+        let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], recepcion: [], consolidado: [] };
         let charts = {};
 
         function parseNum(val) {
@@ -344,24 +434,99 @@
 
         function parseFechaLlegada(str) {
             if (!str) return { iso: "", display: "-", dateObj: null };
-            let s = str.toString().trim();
-            let datePart = s.split(' ')[0];
-            if (datePart.includes('/')) {
-                let parts = datePart.split('/');
-                if (parts.length === 3) {
-                    let dd = parts[0].padStart(2, '0');
-                    let mm = parts[1].padStart(2, '0');
-                    let yyyy = parts[2];
+            let s = str.toString().replace(/["']/g, '').trim();
+            let datePart = s.split(/[ T]/)[0];
+
+            // Soporte para serial numérico de Excel (ej. 46024)
+            if (!isNaN(datePart) && Number(datePart) > 30000 && Number(datePart) < 70000) {
+                let dObj = excelSerialToDate(Number(datePart), 0);
+                if (dObj) {
+                    let yyyy = dObj.getFullYear();
+                    let mm = String(dObj.getMonth() + 1).padStart(2, '0');
+                    let dd = String(dObj.getDate()).padStart(2, '0');
                     let iso = `${yyyy}-${mm}-${dd}`;
-                    return { iso: iso, display: s, dateObj: new Date(`${iso}T00:00:00`) };
+                    return { iso: iso, display: `${dd}/${mm}/${yyyy}`, dateObj: dObj };
                 }
-            } else if (datePart.includes('-')) {
-                let parts = datePart.split('-');
-                if (parts.length === 3 && parts[0].length === 4) {
-                    return { iso: datePart, display: s, dateObj: new Date(`${datePart}T00:00:00`) };
+            }
+
+            const meses = {
+                ene: '01', jan: '01', feb: '02', mar: '03', abr: '04', apr: '04',
+                may: '05', jun: '06', jul: '07', ago: '08', aug: '08', sep: '09',
+                oct: '10', nov: '11', dic: '12', dec: '12'
+            };
+
+            let sep = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : null);
+            if (sep) {
+                let parts = datePart.split(sep);
+                if (parts.length === 3) {
+                    let yyyy, mm, dd;
+                    if (parts[0].length === 4) {
+                        yyyy = parts[0];
+                        mm = parts[1].padStart(2, '0');
+                        dd = parts[2].padStart(2, '0');
+                    } else {
+                        dd = parts[0].padStart(2, '0');
+                        let mesRaw = parts[1].toLowerCase().substring(0, 3);
+                        mm = meses[mesRaw] ? meses[mesRaw] : parts[1].padStart(2, '0');
+                        yyyy = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                    }
+                    let iso = `${yyyy}-${mm}-${dd}`;
+                    let dObj = new Date(`${iso}T00:00:00`);
+                    if (!isNaN(dObj.getTime())) {
+                        return { iso: iso, display: s, dateObj: dObj };
+                    }
                 }
             }
             return { iso: "", display: s, dateObj: null };
+        }
+
+        // Conversión de fecha serial Excel + fracción decimal de hora a objeto Date
+        function excelSerialToDate(fechaRaw, horaRaw) {
+            if (fechaRaw === undefined || fechaRaw === null || fechaRaw.toString().trim() === '') return null;
+            let fStr = fechaRaw.toString().replace(/["']/g, '').trim();
+            let baseDate = null;
+
+            if (!isNaN(fStr) && Number(fStr) > 30000) {
+                let serial = Math.floor(Number(fStr));
+                let utcDays = serial - 25569;
+                let utcMs = utcDays * 86400 * 1000;
+                let tmp = new Date(utcMs);
+                baseDate = new Date(tmp.getUTCFullYear(), tmp.getUTCMonth(), tmp.getUTCDate(), 0, 0, 0);
+            } else {
+                let parsed = parseFechaLlegada(fStr);
+                if (parsed.dateObj) baseDate = new Date(parsed.dateObj.getTime());
+            }
+
+            if (!baseDate || isNaN(baseDate.getTime())) return null;
+
+            // Sumar fracción de hora o texto HH:MM(:SS)
+            if (horaRaw !== undefined && horaRaw !== null && horaRaw.toString().trim() !== '') {
+                let hStr = horaRaw.toString().replace(/["']/g, '').trim();
+                if (!isNaN(hStr)) {
+                    let frac = parseFloat(hStr);
+                    if (frac >= 1) frac = frac % 1;
+                    let totalSecs = Math.round(frac * 86400);
+                    baseDate.setSeconds(baseDate.getSeconds() + totalSecs);
+                } else if (hStr.includes(':')) {
+                    let tParts = hStr.split(':');
+                    let hh = parseInt(tParts[0], 10) || 0;
+                    let mm = parseInt(tParts[1], 10) || 0;
+                    let ss = parseInt(tParts[2], 10) || 0;
+                    baseDate.setHours(hh, mm, ss);
+                }
+            }
+            return baseDate;
+        }
+
+        function calcDiffHoras(dtInicio, dtFin) {
+            if (!dtInicio || !dtFin) return null;
+            let diffHrs = (dtFin.getTime() - dtInicio.getTime()) / (1000 * 60 * 60);
+            // Corrección de cruce de medianoche si la hora de proceso quedó registrada con la misma fecha pero al día siguiente
+            if (diffHrs < -2 && diffHrs > -24) {
+                diffHrs += 24;
+            }
+            if (diffHrs < 0 || diffHrs > 120) return null;
+            return diffHrs;
         }
 
         function getVal(row, possibleKeys) {
@@ -375,80 +540,72 @@
             return undefined;
         }
 
-function normalizeCamaroneraName(name) {
-    if (!name) return "Desconocida";
-    // Eliminar puntos, comas y espacios múltiples, y pasar a mayúsculas para comparar
-    let clean = name.replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
-    let upper = clean.toUpperCase();
+        function normalizeCamaroneraName(name) {
+            if (!name) return "Desconocida";
+            let clean = name.replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+            let upper = clean.toUpperCase();
 
-    // Unificar casos específicos detectados
-    if (upper.startsWith("OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS")) {
-        return "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS OMARSA S.A.";
-    }
-    if (upper === "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA SA") {
-        return "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA S.A.";
-    }
-    if (upper === "PESQUERA MARYCIELO CIA LTDA") {
-        return "PESQUERA MARYCIELO CIA. LTDA.";
-    }
-
-    // Para cualquier otro proveedor, devolver sin puntos ni espacios extra para evitar futuros duplicados
-    return clean;
-}
-
-function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
-    let finalPis = (pisSab || pisOmi || "").toString().trim().toUpperCase();
-    let genericName = "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS";
-
-    // 1. Obtener el nombre real directamente de la columna Camaronera
-    let rawCam = "Desconocida";
-    if (camSab && camSab.trim() !== "" && !camSab.toUpperCase().includes(genericName)) {
-        rawCam = camSab.trim();
-    } else if (camOmi && camOmi.trim() !== "" && !camOmi.toUpperCase().includes(genericName)) {
-        rawCam = camOmi.trim();
-    } else if (camSab && camSab.trim() !== "") {
-        rawCam = camSab.trim();
-    } else if (camOmi && camOmi.trim() !== "") {
-        rawCam = camOmi.trim();
-    }
-
-    // Normalizar puntuación y alias antes de evaluar reglas
-    let finalCam = normalizeCamaroneraName(rawCam);
-    let camUpper = finalCam.toUpperCase();
-
-    // 2. Activar reglas de piscina ÚNICAMENTE si la camaronera es "Camaronera Puna"
-    if (camUpper === "CAMARONERA PUNA" || camUpper.includes("CAMARONERA PUNA")) {
-        // Regla Puerto Inca (PU1 -> Puerto Inca 1, PU2 -> Puerto Inca 2, PU3 -> Puerto Inca 3, PU4 -> Puerto Inca 4)
-        if (finalPis.startsWith("PU") && finalPis.length >= 3) {
-            let numInca = finalPis.charAt(2);
-            if (["1", "2", "3", "4"].includes(numInca)) {
-                return "Puerto Inca " + numInca;
+            if (upper.startsWith("OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS")) {
+                return "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS OMARSA S.A.";
             }
+            if (upper === "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA SA") {
+                return "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA S.A.";
+            }
+            if (upper === "PESQUERA MARYCIELO CIA LTDA") {
+                return "PESQUERA MARYCIELO CIA. LTDA.";
+            }
+            if (upper === "PUNA") {
+                return "Camaronera Puna";
+            }
+            if (upper === "CACHUGRAN") {
+                return "Camaronera Cachugran";
+            }
+            return clean;
         }
 
-        // Regla Puna 2: Prefijo PD (ej. PD100, PD305, etc.)
-        if (finalPis.startsWith("PD")) {
-            return "Puna 2";
+        function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
+            let finalPis = (pisSab || pisOmi || "").toString().trim().toUpperCase().replace(/-/g, '');
+            let genericName = "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS";
+
+            let rawCam = "Desconocida";
+            if (camSab && camSab.trim() !== "" && !camSab.toUpperCase().includes(genericName)) {
+                rawCam = camSab.trim();
+            } else if (camOmi && camOmi.trim() !== "" && !camOmi.toUpperCase().includes(genericName)) {
+                rawCam = camOmi.trim();
+            } else if (camSab && camSab.trim() !== "") {
+                rawCam = camSab.trim();
+            } else if (camOmi && camOmi.trim() !== "") {
+                rawCam = camOmi.trim();
+            }
+
+            let finalCam = normalizeCamaroneraName(rawCam);
+            let camUpper = finalCam.toUpperCase();
+
+            if (camUpper === "CAMARONERA PUNA" || camUpper.includes("CAMARONERA PUNA") || camUpper === "PUNA") {
+                if (finalPis.startsWith("PU") && finalPis.length >= 3) {
+                    let numInca = finalPis.charAt(2);
+                    if (["1", "2", "3", "4"].includes(numInca)) {
+                        return "Puerto Inca " + numInca;
+                    }
+                }
+                if (finalPis.startsWith("PD")) {
+                    return "Puna 2";
+                }
+                let numMatch = finalPis.match(/\d+/);
+                let pisNum = numMatch ? parseInt(numMatch[0], 10) : NaN;
+
+                if (!isNaN(pisNum) && (
+                    (pisNum >= 200 && pisNum <= 299) ||
+                    (pisNum >= 800 && pisNum <= 899) ||
+                    (pisNum >= 900 && pisNum <= 999)
+                )) {
+                    return "Puna";
+                }
+                return "Puna";
+            }
+
+            return finalCam;
         }
-
-        // Regla Puna: Centenas 200, 800 y 900 (o cualquier otra piscina sin PU/PD bajo Camaronera Puna)
-        let numMatch = finalPis.match(/\d+/);
-        let pisNum = numMatch ? parseInt(numMatch[0], 10) : NaN;
-
-        if (!isNaN(pisNum) && (
-            (pisNum >= 200 && pisNum <= 299) ||
-            (pisNum >= 800 && pisNum <= 899) ||
-            (pisNum >= 900 && pisNum <= 999)
-        )) {
-            return "Puna";
-        }
-
-        return "Puna";
-    }
-
-    // 3. Caso contrario: devolver el nombre normalizado sin duplicados
-    return finalCam;
-}
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             let files = e.target.files;
@@ -459,6 +616,7 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
             Array.from(files).forEach(file => {
                 Papa.parse(file, {
                     header: true, 
+                    delimiter: "",
                     dynamicTyping: false, 
                     skipEmptyLines: true,
                     complete: function(results) {
@@ -467,6 +625,7 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                         else if(name.includes('sabor')) db.sabores = results.data;
                         else if(name.includes('metabisulfito')) db.metabisulfito = results.data;
                         else if(name.includes('branquia')) db.branquias = results.data;
+                        else if(name.includes('recepcion')) db.recepcion = results.data;
                         
                         loaded++;
                         if(loaded === files.length) checkAndProcess();
@@ -479,22 +638,35 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
             try {
                 document.getElementById('status-indicator').textContent = "Buscando datos en repositorio...";
                 const files = [
-                    { key: 'liquidaciones', path: './OMIPROD0016_tblControlDeLotesTmp.csv' },
-                    { key: 'sabores', path: './Sabor_Desglosado_Validado.csv' },
-                    { key: 'metabisulfito', path: './Metabisulfito_Validado.csv' },
-                    { key: 'branquias', path: './Reporte_Branquias_Oscuras.csv' }
+                    { key: 'liquidaciones', paths: ['./OMIPROD0016_tblControlDeLotesTmp.csv'], optional: false },
+                    { key: 'sabores', paths: ['./Sabor_Desglosado_Validado.csv'], optional: false },
+                    { key: 'metabisulfito', paths: ['./Metabisulfito_Validado.csv'], optional: false },
+                    { key: 'branquias', paths: ['./Reporte_Branquias_Oscuras.csv'], optional: false },
+                    { key: 'recepcion', paths: ['./INFROMACION RECEPCION.csv', './INFORMACION RECEPCION.csv'], optional: true }
                 ];
                 
-                let allLoaded = true;
+                let allRequiredLoaded = true;
                 for (let f of files) {
-                    let res = await fetch(f.path);
-                    if (!res.ok) { allLoaded = false; break; }
-                    let text = await res.text();
-                    let parsed = Papa.parse(text, { header: true, dynamicTyping: false, skipEmptyLines: true });
-                    db[f.key] = parsed.data;
+                    let loadedThis = false;
+                    for (let p of f.paths) {
+                        try {
+                            let res = await fetch(p);
+                            if (res.ok) {
+                                let text = await res.text();
+                                let parsed = Papa.parse(text, { header: true, delimiter: "", dynamicTyping: false, skipEmptyLines: true });
+                                db[f.key] = parsed.data;
+                                loadedThis = true;
+                                break;
+                            }
+                        } catch (innerErr) {}
+                    }
+                    if (!loadedThis && !f.optional) {
+                        allRequiredLoaded = false;
+                        break;
+                    }
                 }
                 
-                if (allLoaded) {
+                if (allRequiredLoaded) {
                     checkAndProcess();
                 } else {
                     document.getElementById('status-indicator').textContent = "Faltan CSVs en servidor. Cárgalos localmente.";
@@ -530,6 +702,56 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                 let lotesMap = new Map();
                 let camaronerasSet = new Set();
 
+                const createEmptyLote = (lote) => ({
+                    Lote: lote,
+                    Fecha_ISO: "",
+                    Fecha_Display: "-",
+                    Tipo_MP: "",
+                    Camaronera_Original_Omi: "",
+                    Piscina_Omi: "",
+                    Camaronera_Oficial: "Desconocida",
+                    Piscina: "",
+                    Libras_Recibidas: 0,
+                    Libras_Recibidas_Sabores: 0,
+                    Libras_Procesadas: 0,
+                    Basura: 0,
+                    Rechazo: 0,
+                    Gramaje_OC: 0,
+                    Valor_Total: 0,
+                    Clases: { A: 0, B: 0, C: 0, D: 0, RECHAZO: 0 },
+                    Sabor_Caract: 0,
+                    Sabor_Caract_Cola: 0,
+                    TML: 0, TL: 0, TF: 0,
+                    CML: 0, CL: 0, CF: 0,
+                    Comb_Cola: 0,
+                    Choclo_Total: 0,
+                    Gallinaza_Total: 0,
+                    Mangle_Total: 0,
+                    Otros_Sabores: 0,
+                    BOML: 0, BOL: 0, BOF: 0,
+                    // Campos de Calidad Detallada (Metabisulfito_Validado)
+                    Has_Meta: false,
+                    Lbs_Muestreadas_Meta: 0,
+                    Perc_Fresco: 0,
+                    Perc_Meta: 0,
+                    Perc_Flacido: 0,
+                    Perc_Cab_Floja: 0,
+                    Perc_Cab_Desp: 0,
+                    Perc_Melanosis: 0,
+                    Mancha_Leve: 0,
+                    Mancha_Fuerte: 0,
+                    Bact_Leve: 0,
+                    // Campos de Tiempos y Turnos (INFROMACION RECEPCION)
+                    Has_Recepcion: false,
+                    Turno_Llegada: "",
+                    Lbs_Dia: 0,
+                    Lbs_Noche: 0,
+                    Es_Fraccionado: false,
+                    Espera_Primer_Ingreso_Hrs: null,
+                    Espera_Ponderada_Hrs: null
+                });
+
+                // 1. OMIPROD (Liquidación)
                 db.liquidaciones.forEach(row => {
                     let loteRaw = getVal(row, ['Lote', 'lote']);
                     if (loteRaw === undefined) return;
@@ -537,34 +759,15 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     if(!lote) return;
                     
                     if(!lotesMap.has(lote)) {
-                        lotesMap.set(lote, {
-                            Lote: lote,
-                            Fecha_ISO: "",
-                            Fecha_Display: "-",
-                            Tipo_MP: "",
-                            Camaronera_Original_Omi: (getVal(row, ['Camaronera']) || "").trim(),
-                            Piscina_Omi: (getVal(row, ['Piscina']) || "").trim(),
-                            Camaronera_Oficial: "Desconocida",
-                            Piscina: "",
-                            Libras_Recibidas: parseNum(getVal(row, ['Libras Recibidas'])),
-                            Libras_Recibidas_Sabores: 0,
-                            Libras_Procesadas: parseNum(getVal(row, ['Libras Procesadas'])),
-                            Basura: parseNum(getVal(row, ['Basura'])),
-                            Rechazo: parseNum(getVal(row, ['Rechazo'])),
-                            Gramaje_OC: parseNum(getVal(row, ['Gramaje OC'])),
-                            Valor_Total: 0,
-                            Clases: { A: 0, B: 0, C: 0, D: 0, RECHAZO: 0 },
-                            Sabor_Caract: 0,
-                            Sabor_Caract_Cola: 0,
-                            TML: 0, TL: 0, TF: 0,
-                            CML: 0, CL: 0, CF: 0,
-                            Comb_Cola: 0,
-                            Choclo_Total: 0,
-                            Gallinaza_Total: 0,
-                            Mangle_Total: 0,
-                            Otros_Sabores: 0,
-                            BOML: 0, BOL: 0, BOF: 0
-                        });
+                        let lObj = createEmptyLote(lote);
+                        lObj.Camaronera_Original_Omi = (getVal(row, ['Camaronera']) || "").trim();
+                        lObj.Piscina_Omi = (getVal(row, ['Piscina']) || "").trim();
+                        lObj.Libras_Recibidas = parseNum(getVal(row, ['Libras Recibidas']));
+                        lObj.Libras_Procesadas = parseNum(getVal(row, ['Libras Procesadas']));
+                        lObj.Basura = parseNum(getVal(row, ['Basura']));
+                        lObj.Rechazo = parseNum(getVal(row, ['Rechazo']));
+                        lObj.Gramaje_OC = parseNum(getVal(row, ['Gramaje OC']));
+                        lotesMap.set(lote, lObj);
                     }
                     let l = lotesMap.get(lote);
                     l.Valor_Total += parseNum(getVal(row, ['Valor Total $']));
@@ -581,23 +784,37 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     else if(claseStr === 'D') l.Clases.D += librasFilas;
                 });
 
-                if (lotesMap.size === 0) throw new Error("No se detectó la columna Lote en OMIPROD.");
-
+                // 2. METABISULFITO_VALIDADO (Ponderación por libras de cada muestreo)
                 let metaTemp = {};
                 db.metabisulfito.forEach(row => {
                     let lote = (getVal(row, ['Lote']) || '').toString().trim();
                     if(!lote) return;
-                    if(!metaTemp[lote]) metaTemp[lote] = { totalLbs: 0, frescoSuma: 0, metaSuma: 0, manchaL: 0, manchaF: 0, bactL: 0 };
+                    if(!metaTemp[lote]) {
+                        metaTemp[lote] = { 
+                            totalLbs: 0, frescoSuma: 0, metaSuma: 0, 
+                            flacidoSuma: 0, cabFlojaSuma: 0, cabDespSuma: 0, melanosisSuma: 0,
+                            manchaL: 0, manchaF: 0, bactL: 0,
+                            camaronera: (getVal(row, ['Camaronera']) || '').trim(),
+                            piscina: (getVal(row, ['Piscina']) || '').trim(),
+                            fechaLleg: getVal(row, ['Fecha de lleg', 'Fecha de llegada'])
+                        };
+                    }
                     
-                    let lbs = parseNum(getVal(row, ['Libras recibidas']));
+                    let lbs = parseNum(getVal(row, ['Libras recibidas', 'Libras recibida']));
+                    if (lbs <= 0) lbs = 1; // Respaldo en caso de fila sin peso asignado
                     metaTemp[lote].totalLbs += lbs;
-                    metaTemp[lote].frescoSuma += parseNum(getVal(row, ['E. fresco y sano (%)'])) * lbs;
+                    metaTemp[lote].frescoSuma += parseNum(getVal(row, ['E. fresco y sano (%)', 'E. fresco y sano'])) * lbs;
                     metaTemp[lote].metaSuma += parseNum(getVal(row, ['Porcentaje de metabisulfito'])) * lbs;
+                    metaTemp[lote].flacidoSuma += parseNum(getVal(row, ['E. flacido (%)', 'E. flácido (%)', 'E. flacido'])) * lbs;
+                    metaTemp[lote].cabFlojaSuma += parseNum(getVal(row, ['E. cabeza floja (%)', 'E. cabeza floja'])) * lbs;
+                    metaTemp[lote].cabDespSuma += parseNum(getVal(row, ['E. cabeza desprendida (%)', 'E. cabeza desprendida'])) * lbs;
+                    metaTemp[lote].melanosisSuma += parseNum(getVal(row, ['E. melanosis (%)', 'E. melanosis'])) * lbs;
                     metaTemp[lote].manchaL += parseNum(getVal(row, ['E. mancha leve (%)'])) * lbs;
                     metaTemp[lote].manchaF += parseNum(getVal(row, ['E. mancha fuerte (%)'])) * lbs;
-                    metaTemp[lote].bactL += parseNum(getVal(row, ['E. hongo/bacteria leve (%)'])) * lbs;
+                    metaTemp[lote].bactL += parseNum(getVal(row, ['E. hongo/bacteria leve (%)', 'E. hongo/bact (%)'])) * lbs;
                 });
 
+                // 3. SABORES
                 db.sabores.forEach(row => {
                     let lote = (getVal(row, ['Lote']) || '').toString().trim();
                     if(lotesMap.has(lote)) {
@@ -605,7 +822,7 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                         let pisSab = (getVal(row, ['Piscina']) || "").trim();
                         let camSab = (getVal(row, ['Camaronera']) || "").trim();
                         
-                        let fechaRaw = getVal(row, ['Fecha llegada a planta']);
+                        let fechaRaw = getVal(row, ['Fecha llegada a planta', 'Fecha llegada']);
                         let parsedF = parseFechaLlegada(fechaRaw);
                         l.Fecha_ISO = parsedF.iso;
                         l.Fecha_Display = parsedF.display;
@@ -627,7 +844,6 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                         l.TL = parseNum(getVal(row, ['Sabor tierra entero leve %']));
                         l.TF = parseNum(getVal(row, ['Sabor tierra entero fuerte %']));
                         
-                        // Regla de Planta: "Otros" corresponde a combustible
                         let otML = parseNum(getVal(row, ['Sabor otros entero muy leve %']));
                         let otL  = parseNum(getVal(row, ['Sabor otros entero leve %']));
                         let otF  = parseNum(getVal(row, ['Sabor otros entero fuerte %']));
@@ -644,7 +860,6 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                         let otColaML = parseNum(getVal(row, ['Sabor otros cola muy leve %']));
                         l.Comb_Cola = ccf + ccl + ccml + otColaF + otColaL + otColaML;
 
-                        // Sabores vegetales/orgánicos en Entero (Choclo, Gallinaza, Mangle)
                         let chF = parseNum(getVal(row, ['Sabor choclo entero fuerte %']));
                         let chL = parseNum(getVal(row, ['Sabor choclo entero leve %']));
                         let chML = parseNum(getVal(row, ['Sabor choclo entero muy leve %']));
@@ -664,6 +879,7 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     }
                 });
 
+                // 4. BRANQUIAS
                 db.branquias.forEach(row => {
                     let lote = (getVal(row, ['Lote', 'lote']) || '').toString().trim();
                     if(lotesMap.has(lote)) {
@@ -674,11 +890,102 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     }
                 });
 
+                // 5. INFROMACION RECEPCION (Tiempos de espera en patio y fraccionamiento Día/Noche)
+                if (db.recepcion && db.recepcion.length > 0) {
+                    db.recepcion.forEach(row => {
+                        let lote = (getVal(row, ['LOTE', 'Lote']) || '').toString().trim();
+                        if (!lote) return;
+
+                        let statusPesca = (getVal(row, ['STATUS PESCA']) || '').toString().toUpperCase().trim();
+                        let totalRecibido = parseNum(getVal(row, ['TOTAL RECIBIDO']));
+                        if (statusPesca === 'CANCELADO' && totalRecibido === 0) return;
+
+                        // Si el lote aún no estaba en OMIPROD pero tiene calidad en Metabisulfito, crearlo para no perder trazabilidad en Pestaña 5
+                        if (!lotesMap.has(lote)) {
+                            let newL = createEmptyLote(lote);
+                            newL.Libras_Recibidas = totalRecibido;
+                            lotesMap.set(lote, newL);
+                        }
+
+                        let l = lotesMap.get(lote);
+                        let turnoRaw = (getVal(row, ['TURNO']) || '').toString().toUpperCase().trim();
+                        let fechaLlegRaw = getVal(row, ['FECHA']);
+                        let horaLlegRaw = getVal(row, ['HORA LLEGA']);
+                        let provRec = (getVal(row, ['PROVEEDOR']) || '').trim();
+                        let piscRec = (getVal(row, ['PISC']) || '').trim();
+
+                        let dtLlegada = excelSerialToDate(fechaLlegRaw, horaLlegRaw);
+                        if (!l.Fecha_ISO && dtLlegada) {
+                            let yyyy = dtLlegada.getFullYear();
+                            let mm = String(dtLlegada.getMonth() + 1).padStart(2, '0');
+                            let dd = String(dtLlegada.getDate()).padStart(2, '0');
+                            l.Fecha_ISO = `${yyyy}-${mm}-${dd}`;
+                            l.Fecha_Display = `${dd}/${mm}/${yyyy}`;
+                        }
+
+                        if (l.Camaronera_Oficial === "Desconocida" && (provRec || piscRec)) {
+                            l.Camaronera_Oficial = resolveCamaronera(provRec, piscRec, l.Camaronera_Original_Omi, l.Piscina_Omi);
+                            camaronerasSet.add(l.Camaronera_Oficial);
+                        }
+                        if (!l.Piscina && piscRec) l.Piscina = piscRec;
+
+                        // Bloque 1: PROCESO TURNO DIA
+                        let fechaProcDia = getVal(row, ['FECHA DE PROCESO']);
+                        let horaProcDia = getVal(row, ['HORA PROCESO']);
+                        let lbsDia = parseNum(getVal(row, ['LBS DIA']));
+                        let dtProcDia = excelSerialToDate(fechaProcDia, horaProcDia);
+                        let espDia = (lbsDia > 0) ? calcDiffHoras(dtLlegada, dtProcDia) : null;
+
+                        // Bloque 2: PROCESO TURNO NOCHE
+                        let fechaProcNoche = getVal(row, ['FECHA DE PROCESO2']);
+                        let horaProcNoche = getVal(row, ['HORA PROCESO2']);
+                        let lbsNoche = parseNum(getVal(row, ['LBS NOCHE']));
+                        let dtProcNoche = excelSerialToDate(fechaProcNoche, horaProcNoche);
+                        let espNoche = (lbsNoche > 0) ? calcDiffHoras(dtLlegada, dtProcNoche) : null;
+
+                        let validEsperas = [];
+                        let sumPesoHoras = 0;
+                        let sumPesoLbs = 0;
+
+                        if (espDia !== null && lbsDia > 0) {
+                            validEsperas.push(espDia);
+                            sumPesoHoras += espDia * lbsDia;
+                            sumPesoLbs += lbsDia;
+                        }
+                        if (espNoche !== null && lbsNoche > 0) {
+                            validEsperas.push(espNoche);
+                            sumPesoHoras += espNoche * lbsNoche;
+                            sumPesoLbs += lbsNoche;
+                        }
+
+                        if (validEsperas.length > 0) {
+                            l.Has_Recepcion = true;
+                            l.Turno_Llegada = turnoRaw;
+                            l.Lbs_Dia = lbsDia;
+                            l.Lbs_Noche = lbsNoche;
+                            l.Es_Fraccionado = (lbsDia > 0 && lbsNoche > 0);
+                            l.Espera_Primer_Ingreso_Hrs = Math.min(...validEsperas);
+                            l.Espera_Ponderada_Hrs = sumPesoLbs > 0 ? (sumPesoHoras / sumPesoLbs) : l.Espera_Primer_Ingreso_Hrs;
+                        }
+                    });
+                }
+
+                // Consolidación final por Lote
                 Array.from(lotesMap.values()).forEach(l => {
                     let lote = l.Lote;
-                    if (l.Camaronera_Oficial === "Desconocida" && (l.Camaronera_Original_Omi || l.Piscina_Omi)) {
-                        l.Camaronera_Oficial = resolveCamaronera(null, null, l.Camaronera_Original_Omi, l.Piscina_Omi);
-                        camaronerasSet.add(l.Camaronera_Oficial);
+                    if (l.Camaronera_Oficial === "Desconocida") {
+                        let metaCam = metaTemp[lote] ? metaTemp[lote].camaronera : null;
+                        let metaPis = metaTemp[lote] ? metaTemp[lote].piscina : null;
+                        if (metaCam || metaPis || l.Camaronera_Original_Omi || l.Piscina_Omi) {
+                            l.Camaronera_Oficial = resolveCamaronera(metaCam, metaPis, l.Camaronera_Original_Omi, l.Piscina_Omi);
+                            camaronerasSet.add(l.Camaronera_Oficial);
+                        }
+                    }
+
+                    if (!l.Fecha_ISO && metaTemp[lote] && metaTemp[lote].fechaLleg) {
+                        let parsedMetaF = parseFechaLlegada(metaTemp[lote].fechaLleg);
+                        l.Fecha_ISO = parsedMetaF.iso;
+                        l.Fecha_Display = parsedMetaF.display;
                     }
 
                     if (l.Libras_Recibidas_Sabores === 0) {
@@ -686,13 +993,18 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     }
 
                     if(metaTemp[lote] && metaTemp[lote].totalLbs > 0) {
-                        l.Perc_Fresco = metaTemp[lote].frescoSuma / metaTemp[lote].totalLbs;
-                        l.Perc_Meta = metaTemp[lote].metaSuma / metaTemp[lote].totalLbs;
-                        l.Mancha_Leve = metaTemp[lote].manchaL / metaTemp[lote].totalLbs;
-                        l.Mancha_Fuerte = metaTemp[lote].manchaF / metaTemp[lote].totalLbs;
-                        l.Bact_Leve = metaTemp[lote].bactL / metaTemp[lote].totalLbs;
-                    } else {
-                        l.Perc_Fresco = 0; l.Perc_Meta = 0; l.Mancha_Leve = 0; l.Mancha_Fuerte = 0; l.Bact_Leve = 0;
+                        let m = metaTemp[lote];
+                        l.Has_Meta = true;
+                        l.Lbs_Muestreadas_Meta = m.totalLbs;
+                        l.Perc_Fresco = m.frescoSuma / m.totalLbs;
+                        l.Perc_Meta = m.metaSuma / m.totalLbs;
+                        l.Perc_Flacido = m.flacidoSuma / m.totalLbs;
+                        l.Perc_Cab_Floja = m.cabFlojaSuma / m.totalLbs;
+                        l.Perc_Cab_Desp = m.cabDespSuma / m.totalLbs;
+                        l.Perc_Melanosis = m.melanosisSuma / m.totalLbs;
+                        l.Mancha_Leve = m.manchaL / m.totalLbs;
+                        l.Mancha_Fuerte = m.manchaF / m.totalLbs;
+                        l.Bact_Leve = m.bactL / m.totalLbs;
                     }
                     
                     let maxLbs = 0;
@@ -740,6 +1052,8 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
             document.getElementById('filterFechaHasta').value = '';
             document.getElementById('filterCamaronera').value = 'ALL';
             document.getElementById('filterClase').value = 'ALL';
+            if(document.getElementById('filterTurnoRecep')) document.getElementById('filterTurnoRecep').value = 'ALL';
+            if(document.getElementById('filterFlujoRecep')) document.getElementById('filterFlujoRecep').value = 'ALL';
             renderDashboard();
         }
 
@@ -775,6 +1089,7 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="19" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
                     document.getElementById('tbody-ranking').innerHTML = '';
                     document.getElementById('tbody-ranking-sabores').innerHTML = '';
+                    document.getElementById('tbody-recep-proveedores').innerHTML = '';
                     return; 
                 }
                 
@@ -902,7 +1217,6 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     </tr>
                 `;
 
-                // TABLA 2: MAPA DE CALOR (SIN COLUMNA FRESCO Y SANO)
                 let arrLotes = [...data].sort((a,b) => b.Libras_Procesadas - a.Libras_Procesadas);
                 document.getElementById('tbody-calor').innerHTML = arrLotes.map(d => {
                     let meta = d.Perc_Meta || 0;
@@ -946,7 +1260,7 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                     </tr>`;
                 }).join('');
 
-                // --- PESTAÑA 3: RANKING GENERAL (SIN COLUMNA % PROM. FRESCO) ---
+                // --- PESTAÑA 3: RANKING GENERAL ---
                 let provs = {};
                 data.forEach(d => {
                     let p = d.Camaronera_Oficial || "Desconocida";
@@ -1006,6 +1320,9 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                 // --- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE ---
                 renderSaboresTab(data, activePlugins);
 
+                // --- PESTAÑA 5: TIEMPOS DE ESPERA Y CALIDAD DE RECEPCIÓN ---
+                renderTiemposRecepcionTab(data);
+
             } catch(error) {
                 console.error("Error en renderDashboard:", error);
                 document.getElementById('status-indicator').textContent = "Fallo en renderizado: " + error.message;
@@ -1014,6 +1331,239 @@ function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
                 document.getElementById('status-indicator').textContent = "Dashboard Actualizado";
                 document.getElementById('status-indicator').className = "text-xs font-semibold px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full";
             }
+        }
+
+        function renderTiemposRecepcionTab(data) {
+            let turnoFilter = document.getElementById('filterTurnoRecep') ? document.getElementById('filterTurnoRecep').value : 'ALL';
+            let flujoFilter = document.getElementById('filterFlujoRecep') ? document.getElementById('filterFlujoRecep').value : 'ALL';
+
+            // Filtrar lotes con calidad muestreada (Metabisulfito_Validado) y aplicar filtros de Recepción si existen
+            let lotesCalidad = data.filter(d => {
+                if (!d.Has_Meta) return false;
+                if (turnoFilter !== 'ALL') {
+                    if (!d.Has_Recepcion || d.Turno_Llegada !== turnoFilter) return false;
+                }
+                if (flujoFilter !== 'ALL') {
+                    if (!d.Has_Recepcion) return false;
+                    if (flujoFilter === 'DIRECTO' && d.Es_Fraccionado) return false;
+                    if (flujoFilter === 'FRACCIONADO' && !d.Es_Fraccionado) return false;
+                }
+                return true;
+            });
+
+            let lotesConTiempos = lotesCalidad.filter(d => d.Has_Recepcion && d.Espera_Ponderada_Hrs !== null);
+            document.getElementById('recep-cruce-summary').innerText = `Lotes con Calidad: ${lotesCalidad.length} | Cruzados con Tiempos Recepción: ${lotesConTiempos.length}`;
+
+            // 1. Cálculo de KPIs globales (ponderados por volumen)
+            let sumLbsCal = 0, sumFresco = 0, sumFlacido = 0, sumCabFloja = 0, sumCabDesp = 0, sumMelanosis = 0;
+            lotesCalidad.forEach(d => {
+                let w = d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 1;
+                sumLbsCal += w;
+                sumFresco += d.Perc_Fresco * w;
+                sumFlacido += d.Perc_Flacido * w;
+                sumCabFloja += d.Perc_Cab_Floja * w;
+                sumCabDesp += d.Perc_Cab_Desp * w;
+                sumMelanosis += d.Perc_Melanosis * w;
+            });
+
+            let baseCal = sumLbsCal || 1;
+            let pctFresco = sumLbsCal > 0 ? (sumFresco / baseCal) : 0;
+            let pctFlacido = sumLbsCal > 0 ? (sumFlacido / baseCal) : 0;
+            let pctCabFloja = sumLbsCal > 0 ? (sumCabFloja / baseCal) : 0;
+            let pctCabDesp = sumLbsCal > 0 ? (sumCabDesp / baseCal) : 0;
+            let pctMelanosis = sumLbsCal > 0 ? (sumMelanosis / baseCal) : 0;
+
+            let sumLbsTiempos = 0, sumEspPond = 0, sumEspPrim = 0;
+            lotesConTiempos.forEach(d => {
+                let w = (d.Lbs_Dia + d.Lbs_Noche) || d.Lbs_Muestreadas_Meta || 1;
+                sumLbsTiempos += w;
+                sumEspPond += d.Espera_Ponderada_Hrs * w;
+                sumEspPrim += d.Espera_Primer_Ingreso_Hrs * w;
+            });
+
+            let avgEspPond = sumLbsTiempos > 0 ? (sumEspPond / sumLbsTiempos) : 0;
+            let avgEspPrim = sumLbsTiempos > 0 ? (sumEspPrim / sumLbsTiempos) : 0;
+
+            document.getElementById('kpi-esp-ponderada').innerText = lotesConTiempos.length > 0 ? `${avgEspPond.toFixed(1)} h` : "Sin CSV Recep.";
+            document.getElementById('kpi-esp-primer').innerText = lotesConTiempos.length > 0 ? `1er Ingreso Prom: ${avgEspPrim.toFixed(1)} h` : "Carga INFROMACION RECEPCION.csv";
+
+            document.getElementById('kpi-cal-fresco').innerText = `${pctFresco.toFixed(1)}%`;
+            document.getElementById('kpi-cal-fresco-sub').innerText = `${sumLbsCal.toLocaleString('en-US',{maximumFractionDigits:0})} lbs muestreadas`;
+
+            document.getElementById('kpi-cal-flac-cf').innerText = `${(pctFlacido + pctCabFloja).toFixed(1)}%`;
+            document.getElementById('kpi-cal-flac-cf-sub').innerText = `Flácido: ${pctFlacido.toFixed(1)}% | Cab. Floja: ${pctCabFloja.toFixed(1)}%`;
+
+            document.getElementById('kpi-cal-cd-mel').innerText = `${(pctCabDesp + pctMelanosis).toFixed(1)}%`;
+            document.getElementById('kpi-cal-cd-mel-sub').innerText = `Cab. Desp: ${pctCabDesp.toFixed(1)}% | Melanosis: ${pctMelanosis.toFixed(1)}%`;
+
+            // 2. Gráfico 1: Deterioro por Rangos de Espera (<4h, 4-8h, 8-12h, >12h)
+            const rangos = [
+                { label: '< 4h', min: 0, max: 4, lbs: 0, lotes: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
+                { label: '4 - 8h', min: 4, max: 8, lbs: 0, lotes: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
+                { label: '8 - 12h', min: 8, max: 12, lbs: 0, lotes: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
+                { label: '> 12h', min: 12, max: 999, lbs: 0, lotes: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 }
+            ];
+
+            lotesConTiempos.forEach(d => {
+                let h = d.Espera_Ponderada_Hrs;
+                let w = d.Lbs_Muestreadas_Meta || 1;
+                let r = rangos.find(rng => h >= rng.min && h < rng.max) || rangos[3];
+                r.lotes++;
+                r.lbs += w;
+                r.fresco += d.Perc_Fresco * w;
+                r.flacido += d.Perc_Flacido * w;
+                r.cabFloja += d.Perc_Cab_Floja * w;
+                r.cabDesp += d.Perc_Cab_Desp * w;
+                r.melanosis += d.Perc_Melanosis * w;
+            });
+
+            createChart('chartEsperaRangos', {
+                type: 'bar',
+                data: {
+                    labels: rangos.map(r => `${r.label} (${r.lotes} lotes)`),
+                    datasets: [
+                        { label: '% Fresco y Sano', data: rangos.map(r => r.lbs > 0 ? +(r.fresco / r.lbs).toFixed(1) : 0), backgroundColor: '#10b981', yAxisID: 'y' },
+                        { label: '% Flácido', data: rangos.map(r => r.lbs > 0 ? +(r.flacido / r.lbs).toFixed(1) : 0), backgroundColor: '#f59e0b', yAxisID: 'y1' },
+                        { label: '% Cabeza Floja', data: rangos.map(r => r.lbs > 0 ? +(r.cabFloja / r.lbs).toFixed(1) : 0), backgroundColor: '#fb923c', yAxisID: 'y1' },
+                        { label: '% Cabeza Desprendida', data: rangos.map(r => r.lbs > 0 ? +(r.cabDesp / r.lbs).toFixed(1) : 0), backgroundColor: '#e11d48', yAxisID: 'y1' },
+                        { label: '% Melanosis', data: rangos.map(r => r.lbs > 0 ? +(r.melanosis / r.lbs).toFixed(1) : 0), backgroundColor: '#4f46e5', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            type: 'linear', position: 'left', beginAtZero: true, max: 100,
+                            title: { display: true, text: '% Fresco y Sano', font: { weight: 'bold' } }
+                        },
+                        y1: {
+                            type: 'linear', position: 'right', beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: '% Defectos Físicos', font: { weight: 'bold' } }
+                        }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // 3. Gráfico 2: Comparativa Lotes Directos vs Lotes Fraccionados (Día/Noche)
+            const gruposFlujo = {
+                directo: { label: 'Lotes Directos (1 Turno)', lbs: 0, lotes: 0, esp: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
+                fracc: { label: 'Lotes Fraccionados (Día/Noche)', lbs: 0, lotes: 0, esp: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 }
+            };
+
+            lotesConTiempos.forEach(d => {
+                let g = d.Es_Fraccionado ? gruposFlujo.fracc : gruposFlujo.directo;
+                let w = d.Lbs_Muestreadas_Meta || 1;
+                g.lotes++;
+                g.lbs += w;
+                g.esp += d.Espera_Ponderada_Hrs * w;
+                g.fresco += d.Perc_Fresco * w;
+                g.flacido += d.Perc_Flacido * w;
+                g.cabFloja += d.Perc_Cab_Floja * w;
+                g.cabDesp += d.Perc_Cab_Desp * w;
+                g.melanosis += d.Perc_Melanosis * w;
+            });
+
+            let espDir = gruposFlujo.directo.lbs > 0 ? (gruposFlujo.directo.esp / gruposFlujo.directo.lbs).toFixed(1) : '0.0';
+            let espFra = gruposFlujo.fracc.lbs > 0 ? (gruposFlujo.fracc.esp / gruposFlujo.fracc.lbs).toFixed(1) : '0.0';
+            document.getElementById('subtitulo-fraccionamiento').innerText = 
+                `Directos (${gruposFlujo.directo.lotes} lotes, ${espDir}h espera) vs. Fraccionados (${gruposFlujo.fracc.lotes} lotes, ${espFra}h espera)`;
+
+            createChart('chartFlujoTurnos', {
+                type: 'bar',
+                data: {
+                    labels: ['Espera Pond. (h)', '% Fresco y Sano', '% Flácido', '% Cabeza Floja', '% Cab. Desprendida', '% Melanosis'],
+                    datasets: [
+                        {
+                            label: `Directos (${gruposFlujo.directo.lotes} lotes)`,
+                            backgroundColor: '#0d9488',
+                            data: [
+                                gruposFlujo.directo.lbs > 0 ? +(gruposFlujo.directo.esp / gruposFlujo.directo.lbs).toFixed(1) : 0,
+                                gruposFlujo.directo.lbs > 0 ? +(gruposFlujo.directo.fresco / gruposFlujo.directo.lbs).toFixed(1) : 0,
+                                gruposFlujo.directo.lbs > 0 ? +(gruposFlujo.directo.flacido / gruposFlujo.directo.lbs).toFixed(1) : 0,
+                                gruposFlujo.directo.lbs > 0 ? +(gruposFlujo.directo.cabFloja / gruposFlujo.directo.lbs).toFixed(1) : 0,
+                                gruposFlujo.directo.lbs > 0 ? +(gruposFlujo.directo.cabDesp / gruposFlujo.directo.lbs).toFixed(1) : 0,
+                                gruposFlujo.directo.lbs > 0 ? +(gruposFlujo.directo.melanosis / gruposFlujo.directo.lbs).toFixed(1) : 0
+                            ]
+                        },
+                        {
+                            label: `Fraccionados Día/Noche (${gruposFlujo.fracc.lotes} lotes)`,
+                            backgroundColor: '#6366f1',
+                            data: [
+                                gruposFlujo.fracc.lbs > 0 ? +(gruposFlujo.fracc.esp / gruposFlujo.fracc.lbs).toFixed(1) : 0,
+                                gruposFlujo.fracc.lbs > 0 ? +(gruposFlujo.fracc.fresco / gruposFlujo.fracc.lbs).toFixed(1) : 0,
+                                gruposFlujo.fracc.lbs > 0 ? +(gruposFlujo.fracc.flacido / gruposFlujo.fracc.lbs).toFixed(1) : 0,
+                                gruposFlujo.fracc.lbs > 0 ? +(gruposFlujo.fracc.cabFloja / gruposFlujo.fracc.lbs).toFixed(1) : 0,
+                                gruposFlujo.fracc.lbs > 0 ? +(gruposFlujo.fracc.cabDesp / gruposFlujo.fracc.lbs).toFixed(1) : 0,
+                                gruposFlujo.fracc.lbs > 0 ? +(gruposFlujo.fracc.melanosis / gruposFlujo.fracc.lbs).toFixed(1) : 0
+                            ]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // 4. Tabla de Desempeño por Camaronera (Sin columna de Espera Promedio)
+            let provRecep = {};
+            lotesCalidad.forEach(d => {
+                let cam = d.Camaronera_Oficial || "Desconocida";
+                if (!provRecep[cam]) {
+                    provRecep[cam] = { nombre: cam, lotes: 0, lbs: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 };
+                }
+                let p = provRecep[cam];
+                let w = d.Lbs_Muestreadas_Meta || 1;
+                p.lotes++;
+                p.lbs += w;
+                p.fresco += d.Perc_Fresco * w;
+                p.flacido += d.Perc_Flacido * w;
+                p.cabFloja += d.Perc_Cab_Floja * w;
+                p.cabDesp += d.Perc_Cab_Desp * w;
+                p.melanosis += d.Perc_Melanosis * w;
+            });
+
+            let rankRecep = Object.values(provRecep).map(p => {
+                let b = p.lbs || 1;
+                return {
+                    nombre: p.nombre,
+                    lotes: p.lotes,
+                    lbs: p.lbs,
+                    pctFresco: (p.fresco / b),
+                    pctFlacido: (p.flacido / b),
+                    pctCabFloja: (p.cabFloja / b),
+                    pctCabDesp: (p.cabDesp / b),
+                    pctMelanosis: (p.melanosis / b)
+                };
+            }).sort((a, b) => b.pctFresco - a.pctFresco);
+
+            document.getElementById('tbody-recep-proveedores').innerHTML = rankRecep.map((r, i) => {
+                let badge = '<span class="badge-green">Óptimo</span>';
+                if (r.pctFresco < 46 || r.pctCabDesp > 5 || r.pctMelanosis > 5) {
+                    badge = '<span class="badge-red">Deterioro Crítico</span>';
+                } else if (r.pctFresco < 60 || r.pctFlacido > 10 || r.pctCabFloja > 10) {
+                    badge = '<span class="badge-yellow">Alerta Física</span>';
+                }
+
+                return `<tr class="hover:bg-slate-50">
+                    <td><span class="bg-slate-800 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">${i+1}</span></td>
+                    <td class="font-bold text-slate-800">${r.nombre}</td>
+                    <td>${r.lotes}</td>
+                    <td class="font-mono text-slate-600">${r.lbs.toLocaleString('en-US',{maximumFractionDigits:0})} lb</td>
+                    <td class="font-bold text-emerald-700 bg-emerald-50/40">${r.pctFresco.toFixed(1)}%</td>
+                    <td class="font-semibold text-amber-700">${r.pctFlacido.toFixed(1)}%</td>
+                    <td class="font-semibold text-amber-800">${r.pctCabFloja.toFixed(1)}%</td>
+                    <td class="font-bold text-rose-700">${r.pctCabDesp.toFixed(1)}%</td>
+                    <td class="font-bold text-indigo-700">${r.pctMelanosis.toFixed(1)}%</td>
+                    <td>${badge}</td>
+                </tr>`;
+            }).join('');
         }
 
         function renderSaboresTab(data, activePlugins) {
