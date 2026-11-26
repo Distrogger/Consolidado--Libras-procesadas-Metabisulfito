@@ -37,7 +37,7 @@
     <header class="bg-white shadow-sm px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-50">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Análisis de Calidad y Rendimiento Industrial</h1>
-            <p class="text-sm text-slate-500">Integración: Liquidación (OMIPROD), Defectos, Organoléptico, Sabores, Branquias y Tiempos FIFO por Convoy</p>
+            <p class="text-sm text-slate-500">Integración: Liquidación (OMIPROD), Defectos (%), Organoléptico, Sabores, Branquias y Tiempos FIFO</p>
         </div>
         <div class="flex items-center gap-3">
             <label class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md cursor-pointer text-sm transition font-semibold">
@@ -58,7 +58,7 @@
         </ul>
     </nav>
 
-    <!-- BARRA DE FILTROS GLOBALES (FECHAS Y CAMARONERA) -->
+    <!-- BARRA DE FILTROS GLOBALES (MES EN CURSO POR DEFECTO + HISTÓRICO) -->
     <div class="bg-slate-100 border-b border-slate-200 px-6 py-3">
         <div class="max-w-7xl mx-auto flex flex-wrap items-end gap-4">
             <div>
@@ -85,13 +85,16 @@
                     <option value="D">Clase D (Combustible)</option>
                 </select>
             </div>
-            <div>
-                <button onclick="resetFilters()" class="bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 rounded text-sm font-semibold transition">
-                    <i class="fa-solid fa-rotate-left mr-1"></i> Limpiar Filtros
+            <div class="flex gap-2">
+                <button onclick="setDefaultMonthFilter(true)" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded text-sm font-semibold transition" title="Filtrar al último mes en curso">
+                    <i class="fa-solid fa-calendar-day mr-1"></i> Mes Actual
+                </button>
+                <button onclick="resetFilters()" class="bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 rounded text-sm font-semibold transition" title="Limpiar todos los filtros para ver todo el histórico">
+                    <i class="fa-solid fa-globe mr-1"></i> Ver Histórico Global
                 </button>
             </div>
-            <div class="ml-auto text-xs text-slate-500 self-center font-medium" id="filter-summary">
-                Mostrando todos los lotes
+            <div class="ml-auto text-xs text-slate-600 self-center font-semibold bg-white px-3 py-1.5 rounded border border-slate-200" id="filter-summary">
+                Mostrando lotes...
             </div>
         </div>
     </div>
@@ -153,7 +156,7 @@
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800">MAPA DE CALOR POR LOTE, CAMARONERA Y PISCINA</h2>
-                        <p class="text-xs text-slate-500">Consolidado de sabores en producto entero (Combustible + Otros, Tierra y Vegetales) y desglose de branquias</p>
+                        <p class="text-xs text-slate-500">Consolidado de calidad física (% Fresco y Sano), sabores en entero y desglose de branquias</p>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto">
                         <input type="text" id="searchCalor" onkeyup="filterCalorTable()" placeholder="Buscar Lote, Fecha o Proveedor..." class="border border-slate-300 rounded px-3 py-2 text-sm w-full">
@@ -169,7 +172,8 @@
                                 <th>Camaronera Oficial</th>
                                 <th>Piscina</th>
                                 <th>Libras Proc.</th>
-                                <th>Metabisulfito</th>
+                                <th>Metabisulfito %</th>
+                                <th class="bg-teal-800 text-white" title="Porcentaje Fresco y Sano en Recepción">Fresco y Sano %</th>
                                 <th class="bg-emerald-800 text-white">Sabor Caract. %</th>
                                 <th class="bg-indigo-800 text-white" title="Total Sabor Combustible Entero % (CML + CL + CF + Otros)">Combustible %</th>
                                 <th class="bg-slate-700 text-white" title="Total Sabor Tierra Entero % (TML + TL + TF)">Tierra %</th>
@@ -196,7 +200,7 @@
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200">
                     <h2 class="text-lg font-bold text-slate-800 uppercase">Ranking Oficial de Camaroneras y Proveedores</h2>
-                    <p class="text-xs text-slate-500">Ordenado por % Clase A y Volumen Procesado</p>
+                    <p class="text-xs text-slate-500">Camaroneras homologadas, ordenadas por % Clase A y Volumen Procesado (sin registros vacíos)</p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full gerencial-table">
@@ -206,6 +210,7 @@
                                 <th>Camaronera Oficial</th>
                                 <th>Lotes</th>
                                 <th>Libras Proc.</th>
+                                <th class="bg-teal-800 text-white">% Fresco y Sano</th>
                                 <th>% Clase A</th>
                                 <th>% Talla</th>
                                 <th>% Clase C</th>
@@ -262,7 +267,7 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                     <div>
                         <h4 class="text-sm font-bold text-slate-700">Tendencia Temporal de Incidencia de Sabores Atípicos por Fecha</h4>
-                        <p class="text-xs text-slate-400">Eje X: Fecha de llegada a planta | Eje Y: % sobre Libras recibidas total del día (pasa el cursor para ver libras)</p>
+                        <p class="text-xs text-slate-400">Eje X: Fecha de llegada a planta (validada) | Eje Y: % sobre Libras recibidas total del día</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600">Vista de Tendencia:</label>
@@ -279,7 +284,7 @@
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800 uppercase">Ranking de Proveedores por Calidad de Sabor</h2>
-                        <p class="text-xs text-slate-500">Porcentajes calculados en función de las libras recibidas totales de cada camaronera</p>
+                        <p class="text-xs text-slate-500">Porcentajes calculados en función de las libras recibidas totales de cada camaronera homologada</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -291,6 +296,7 @@
                                 <th>Lotes Eval.</th>
                                 <th>Libras Recibidas</th>
                                 <th>Lotes c/ Comb.</th>
+                                <th class="bg-teal-800">% Fresco y Sano</th>
                                 <th class="bg-emerald-800">% Sabor Caract.</th>
                                 <th class="bg-indigo-800">% Combustible Total</th>
                                 <th class="bg-indigo-700">% Comb. CML</th>
@@ -344,27 +350,27 @@
                     <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-esp-primer">1er Ingreso Convoy 1: 0.0 h</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Fresco y Sano (Recepción)</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Fresco y Sano (%)</p>
                     <h3 class="text-2xl font-black text-emerald-600 mt-1" id="kpi-cal-fresco">0.0%</h3>
                     <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-cal-fresco-sub">Ponderado por libras muestreadas</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-amber-500">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Flácido + Cabeza Floja</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Flácido + Cabeza Floja (%)</p>
                     <h3 class="text-2xl font-black text-amber-600 mt-1" id="kpi-cal-flac-cf">0.0%</h3>
                     <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-cal-flac-cf-sub">Flácido: 0.0% | Cab. Floja: 0.0%</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-rose-600">
-                    <p class="text-xs text-slate-500 font-bold uppercase">Cab. Desprendida + Melanosis</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Cab. Desprendida + Melanosis (%)</p>
                     <h3 class="text-2xl font-black text-rose-600 mt-1" id="kpi-cal-cd-mel">0.0%</h3>
                     <p class="text-xs text-slate-500 font-medium mt-1" id="kpi-cal-cd-mel-sub">Cab. Desp: 0.0% | Melanosis: 0.0%</p>
                 </div>
             </div>
 
-            <!-- Gráficos Analíticos Fila 1: Rangos de Espera vs Deterioro & Lotes Directos vs Fraccionados -->
+            <!-- Gráficos Analíticos Fila 1 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
                     <h4 class="text-sm font-bold text-slate-700 mb-1">Deterioro Post-Cosecha por Rango de Espera FIFO</h4>
-                    <p class="text-xs text-slate-400 mb-4">Evolución ponderada de parámetros físicos según exposición real por convoy (&lt;4h, 4-8h, 8-12h, &gt;12h)</p>
+                    <p class="text-xs text-slate-400 mb-4">Evolución ponderada de parámetros físicos (%) según exposición real por convoy (&lt;4h, 4-8h, 8-12h, &gt;12h)</p>
                     <div class="relative h-80 w-full"><canvas id="chartEsperaRangos"></canvas></div>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
@@ -374,34 +380,45 @@
                 </div>
             </div>
 
-            <!-- Gráfico Analítico Fila 2: Dispersión Espera (Horas) vs. % Flácido y Cabeza Floja con Tendencia Lineal -->
+            <!-- Gráfico Analítico Fila 2: Dispersión Espera FIFO vs % Fresco y Sano, Flácido y Cabeza Floja (Interactivo) -->
             <div class="bg-slate-900 p-5 rounded-lg shadow-sm border border-slate-800 mb-6 text-white">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
                     <div>
-                        <h4 class="text-base font-bold text-white uppercase tracking-wide">Espera FIFO (Horas) vs. % Flácido y Cabeza Floja</h4>
-                        <p class="text-xs text-slate-400">Correlación lote a lote entre horas ponderadas por convoy y defectos de textura, con líneas de tendencia lineal</p>
+                        <h4 class="text-base font-bold text-white uppercase tracking-wide">Espera FIFO (Horas) vs. % Fresco y Sano, Flácido y Cabeza Floja</h4>
+                        <p class="text-xs text-slate-400">
+                            <span class="text-teal-300 font-semibold"><i class="fa-solid fa-computer-mouse mr-1"></i>1 Clic</span> en un punto filtra ese lote en la tabla inferior &bull; 
+                            <span class="text-amber-300 font-semibold">Doble Clic</span> quita el filtro
+                        </p>
                     </div>
-                    <div class="text-xs font-mono text-slate-300 bg-slate-800 px-3 py-1.5 rounded border border-slate-700" id="scatter-stats-summary">
-                        Pendiente Flácido: -- | Pendiente Cab. Floja: --
+                    <div class="flex items-center gap-2">
+                        <span id="scatter-selected-badge" class="hidden text-xs font-bold bg-sky-600 text-white px-2.5 py-1 rounded">
+                            Lote seleccionado: --
+                        </span>
+                        <div class="text-xs font-mono text-slate-300 bg-slate-800 px-3 py-1.5 rounded border border-slate-700" id="scatter-stats-summary">
+                            Pendientes: --
+                        </div>
                     </div>
                 </div>
                 <div class="relative h-80 w-full"><canvas id="chartScatterFlacidez"></canvas></div>
             </div>
 
-            <!-- NUEVA TABLA: MONITOREO RECEPCIÓN FIFO Y DEFECTOS POR LOTE (Estilo Monitoreo FIFO + Calidad) -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <!-- NUEVA TABLA: MONITOREO RECEPCIÓN FIFO Y DEFECTOS POR LOTE -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden" id="panel-tabla-recep">
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/70">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900 uppercase flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-blue-600"></i> Monitoreo Recepción FIFO y Defectos por Lote
                         </h2>
-                        <p class="text-xs text-slate-500">Trazabilidad por lote: tiempos de llegada (Convoy 1), inicio de proceso, balance de libras y perfil completo de defectos físicos</p>
+                        <p class="text-xs text-slate-500">Trazabilidad por lote: llegada Convoy 1, inicio proceso / desvíos AG, balance de libras y perfil porcentual de defectos</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         <div class="relative flex-1 md:w-72">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                             <input type="text" id="searchLoteRecep" onkeyup="filterRecepLoteTable()" placeholder="Buscar Lote, Camaronera o Piscina..." class="border border-slate-300 rounded-md pl-8 pr-3 py-1.5 text-sm w-full bg-white focus:outline-none focus:border-blue-500">
                         </div>
+                        <button onclick="clearScatterSelection()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-md text-xs font-bold transition whitespace-nowrap">
+                            Limpiar Filtro Lote
+                        </button>
                         <button onclick="exportToCSV('table-recep-lotes', 'monitoreo_recepcion_fifo_lotes.csv')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-md text-sm font-bold transition whitespace-nowrap">
                             <i class="fa-solid fa-download mr-1.5"></i>Exportar CSV
                         </button>
@@ -414,10 +431,10 @@
                                 <th class="bg-slate-900">Lote</th>
                                 <th class="bg-slate-900">Proveedor / Camaronera</th>
                                 <th class="bg-slate-900">Piscina</th>
-                                <th class="bg-slate-900">Cosecha</th>
+                                <th class="bg-slate-900">Cosecha / Destino</th>
                                 <th class="bg-slate-900">Fecha Llegada</th>
                                 <th class="bg-slate-900">Hora Llegada</th>
-                                <th class="bg-slate-900">Hora Proceso</th>
+                                <th class="bg-slate-900">Hora Proceso / Desvío</th>
                                 <th class="bg-slate-900">Espera FIFO</th>
                                 <th class="bg-slate-900 text-right">Lbs Recibidas</th>
                                 <th class="bg-slate-900 text-right">Lbs Procesadas</th>
@@ -457,11 +474,12 @@
 
         let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], recepcion: [], consolidado: [] };
         let charts = {};
+        let selectedScatterLote = null;
 
         function parseNum(val) {
-            if (typeof val === 'number') return val;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
             if (!val || val.toString().trim() === '') return 0;
-            let cleanVal = val.toString().replace(/,/g, '').replace(/"/g, '').trim();
+            let cleanVal = val.toString().replace(/,/g, '').replace(/%/g, '').replace(/"/g, '').trim();
             return parseFloat(cleanVal) || 0;
         }
 
@@ -480,70 +498,111 @@
             return `${hh}:${mm}`;
         }
 
-        function formatDateDDMMYYYY(dt) {
-            if (!dt || isNaN(dt.getTime())) return "-";
-            let dd = String(dt.getDate()).padStart(2, '0');
-            let mm = String(dt.getMonth() + 1).padStart(2, '0');
-            let yyyy = dt.getFullYear();
-            return `${dd}/${mm}/${yyyy}`;
+        // Validación estricta de año operativo (evita 1899 y años irreales de Excel/MM-DD-YYYY)
+        function isValidOperationalYear(year) {
+            return year >= 2024 && year <= 2027;
         }
 
-        // Regla 1: Parseo robusto con soporte para serial Excel y Regex para celdas concatenadas
-        function extractDatesAndTimes(fechaRaw, horaRaw) {
+        // Parseo robusto: soporta Serial Excel, ISO YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY (EE.UU.) y celdas concatenadas
+        function extractDatesAndTimes(fechaRaw, horaRaw, preferUSFormat = false) {
             let dates = [];
             let times = [];
 
             if (fechaRaw !== undefined && fechaRaw !== null && fechaRaw.toString().trim() !== '') {
                 let fStr = fechaRaw.toString().replace(/["']/g, '').trim();
-                // Caso serial numérico de Excel (ej. 46024 o 46024.2156)
-                if (!isNaN(fStr) && Number(fStr) > 30000 && Number(fStr) < 70000) {
+
+                // Ignorar valores nulos o "0" que Excel convierte a 1899-12-30
+                if (fStr === '0' || fStr === '0.0') return { dates: [], times: [] };
+
+                // Caso serial numérico de Excel (ej. 46351 -> 2026)
+                if (!isNaN(fStr)) {
                     let num = Number(fStr);
-                    let serial = Math.floor(num);
-                    let frac = num - serial;
-                    let utcMs = (serial - 25569) * 86400 * 1000;
-                    let tmp = new Date(utcMs);
-                    let base = new Date(tmp.getUTCFullYear(), tmp.getUTCMonth(), tmp.getUTCDate(), 0, 0, 0);
-                    dates.push(base);
-                    if (frac > 0.00001) {
-                        let secs = Math.round(frac * 86400);
-                        times.push({
-                            h: Math.floor(secs / 3600),
-                            m: Math.floor((secs % 3600) / 60),
-                            s: secs % 60
-                        });
+                    if (num >= 44000 && num <= 47500) {
+                        let serial = Math.floor(num);
+                        let frac = num - serial;
+                        let utcMs = (serial - 25569) * 86400 * 1000;
+                        let tmp = new Date(utcMs);
+                        let y = tmp.getUTCFullYear();
+                        if (isValidOperationalYear(y)) {
+                            let base = new Date(y, tmp.getUTCMonth(), tmp.getUTCDate(), 0, 0, 0);
+                            dates.push(base);
+                            if (frac > 0.00001) {
+                                let secs = Math.round(frac * 86400);
+                                times.push({
+                                    h: Math.floor(secs / 3600),
+                                    m: Math.floor((secs % 3600) / 60),
+                                    s: secs % 60
+                                });
+                            }
+                        }
                     }
                 } else {
-                    // Regex para extraer todas las fechas dd/mm/yyyy o yyyy-mm-dd aunque estén pegadas sin espacio
-                    let matchesDMY = fStr.match(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g);
-                    if (matchesDMY) {
-                        matchesDMY.forEach(m => {
+                    // 1. Formato ISO YYYY-MM-DD o YYYY/MM/DD
+                    let matchesYMD = fStr.match(/\b(202[4-7])[\/\-](\d{1,2})[\/\-](\d{1,2})\b/g);
+                    if (matchesYMD) {
+                        matchesYMD.forEach(m => {
                             let sep = m.includes('/') ? '/' : '-';
                             let p = m.split(sep);
-                            let dd = parseInt(p[0], 10);
+                            let yyyy = parseInt(p[0], 10);
                             let mm = parseInt(p[1], 10) - 1;
-                            let yyyy = parseInt(p[2], 10);
-                            if (yyyy < 100) yyyy += 2000;
-                            let dObj = new Date(yyyy, mm, dd, 0, 0, 0);
-                            if (!isNaN(dObj.getTime())) dates.push(dObj);
+                            let dd = parseInt(p[2], 10);
+                            if (isValidOperationalYear(yyyy) && mm >= 0 && mm <= 11 && dd >= 1 && dd <= 31) {
+                                let dObj = new Date(yyyy, mm, dd, 0, 0, 0);
+                                if (!isNaN(dObj.getTime())) dates.push(dObj);
+                            }
                         });
                     } else {
-                        let matchesYMD = fStr.match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/g);
-                        if (matchesYMD) {
-                            matchesYMD.forEach(m => {
+                        // 2. Formato DD/MM/YYYY o MM/DD/YYYY (incluso concatenados como 26/11/202626/11/2026)
+                        let matchesSlash = fStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](202[4-7]|\d{2})/g);
+                        if (matchesSlash) {
+                            matchesSlash.forEach(m => {
                                 let sep = m.includes('/') ? '/' : '-';
                                 let p = m.split(sep);
-                                let dObj = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10), 0, 0, 0);
-                                if (!isNaN(dObj.getTime())) dates.push(dObj);
+                                let part1 = parseInt(p[0], 10);
+                                let part2 = parseInt(p[1], 10);
+                                let yyyy = parseInt(p[2], 10);
+                                if (yyyy < 100) yyyy += 2000;
+
+                                if (!isValidOperationalYear(yyyy)) return;
+
+                                let dd, mm;
+                                if (part2 > 12 && part1 <= 12) {
+                                    // Claramente formato EE.UU. MM/DD/YYYY (ej. 10/26/2026)
+                                    mm = part1 - 1;
+                                    dd = part2;
+                                } else if (part1 > 12 && part2 <= 12) {
+                                    // Claramente formato Latam DD/MM/YYYY (ej. 26/11/2026)
+                                    dd = part1;
+                                    mm = part2 - 1;
+                                } else if (preferUSFormat) {
+                                    // Ambiguo (ej. 11/05/2026) en archivo exportado en formato US
+                                    mm = part1 - 1;
+                                    dd = part2;
+                                } else {
+                                    // Ambiguo en formato Latam DD/MM/YYYY
+                                    dd = part1;
+                                    mm = part2 - 1;
+                                }
+
+                                if (mm >= 0 && mm <= 11 && dd >= 1 && dd <= 31) {
+                                    let dObj = new Date(yyyy, mm, dd, 0, 0, 0);
+                                    if (!isNaN(dObj.getTime())) dates.push(dObj);
+                                }
                             });
                         }
                     }
 
-                    // Si la celda de fecha también incluía hora (ej. "26/11/2026 5:10:28")
+                    // Extraer horas incluidas en la misma cadena (ej. "26/11/2026 5:10:28")
                     let inlineTimes = fStr.match(/\d{1,2}:\d{2}(?::\d{2})?/g);
                     if (inlineTimes && times.length === 0) {
                         inlineTimes.forEach(t => {
                             let tp = t.split(':');
-                            times.push({ h: parseInt(tp[0], 10) || 0, m: parseInt(tp[1], 10) || 0, s: parseInt(tp[2], 10) || 0 });
+                            let hh = parseInt(tp[0], 10);
+                            let mi = parseInt(tp[1], 10);
+                            let ss = parseInt(tp[2], 10) || 0;
+                            if (hh >= 0 && hh <= 23 && mi >= 0 && mi <= 59) {
+                                times.push({ h: hh, m: mi, s: ss });
+                            }
                         });
                     }
                 }
@@ -561,7 +620,6 @@
                         s: totalSecs % 60
                     }];
                 } else {
-                    // Regex para extraer horas pegadas como "09:0009:0009:00"
                     let matchesTime = hStr.match(/\d{1,2}:\d{2}(?::\d{2})?/g);
                     if (matchesTime) {
                         times = matchesTime.map(t => {
@@ -575,11 +633,10 @@
             return { dates, times };
         }
 
-        function buildConsolidatedTimestamp(fechaRaw, horaRaw) {
-            let { dates, times } = extractDatesAndTimes(fechaRaw, horaRaw);
+        function buildConsolidatedTimestamp(fechaRaw, horaRaw, preferUSFormat = false) {
+            let { dates, times } = extractDatesAndTimes(fechaRaw, horaRaw, preferUSFormat);
             if (dates.length === 0) return null;
 
-            // Tomamos la primera fecha válida (deduplicando repeticiones concatenadas como 26/11/202626/11/2026)
             let dt = new Date(dates[0].getTime());
             if (times.length > 0) {
                 dt.setHours(times[0].h, times[0].m, times[0].s || 0, 0);
@@ -587,16 +644,34 @@
             return dt;
         }
 
-        function parseFechaLlegada(str) {
+        function parseFechaLlegada(str, preferUSFormat = false) {
             if (!str) return { iso: "", display: "-", dateObj: null };
-            let dt = buildConsolidatedTimestamp(str, null);
-            if (dt && !isNaN(dt.getTime())) {
+            let dt = buildConsolidatedTimestamp(str, null, preferUSFormat);
+            if (dt && !isNaN(dt.getTime()) && isValidOperationalYear(dt.getFullYear())) {
                 let yyyy = dt.getFullYear();
                 let mm = String(dt.getMonth() + 1).padStart(2, '0');
                 let dd = String(dt.getDate()).padStart(2, '0');
                 return { iso: `${yyyy}-${mm}-${dd}`, display: `${dd}/${mm}/${yyyy}`, dateObj: dt };
             }
-            return { iso: "", display: str.toString().trim(), dateObj: null };
+            return { iso: "", display: "-", dateObj: null };
+        }
+
+        // Detecta si una columna de fechas en un CSV usa formato estadounidense MM/DD/YYYY (ej. Sabor_Desglosado_Validado)
+        function detectUSDateFormat(rows, keys) {
+            let usEvidence = 0;
+            let latamEvidence = 0;
+            for (let i = 0; i < Math.min(rows.length, 150); i++) {
+                let val = getVal(rows[i], keys);
+                if (!val) continue;
+                let m = val.toString().match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](202[4-7])/);
+                if (m) {
+                    let p1 = parseInt(m[1], 10);
+                    let p2 = parseInt(m[2], 10);
+                    if (p2 > 12 && p1 <= 12) usEvidence++;
+                    if (p1 > 12 && p2 <= 12) latamEvidence++;
+                }
+            }
+            return usEvidence > latamEvidence;
         }
 
         // Validación cronológica controlada para cruce de medianoche sin desbordamientos irreales
@@ -605,7 +680,6 @@
             let dt = new Date(dtProcesoRaw.getTime());
             let diffHrs = (dt.getTime() - dtReferencia.getTime()) / 3600000;
 
-            // Si el operador dejó la fecha del día anterior al pasar la medianoche (ej. 25/11 06:00 vs llegada 26/11 05:10 o 25/11 20:00)
             let safetyDays = 0;
             while (diffHrs < -1 && safetyDays < 3) {
                 dt.setDate(dt.getDate() + 1);
@@ -658,42 +732,53 @@
             return undefined;
         }
 
+        // Homologación unificada de nombres de Camaroneras y Proveedores para TODAS las pestañas
         function normalizeCamaroneraName(name) {
             if (!name) return "Desconocida";
             let clean = name.replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+            if (!clean || clean === '-' || clean === '0' || clean.toUpperCase() === 'N/A') return "Desconocida";
             let upper = clean.toUpperCase();
 
             if (upper.startsWith("OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS")) {
                 return "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS OMARSA S.A.";
             }
-            if (upper === "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA SA") {
+            if (upper === "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA SA" || upper.includes("ECUASUPRA")) {
                 return "CAMARONERA SUPRACAMARON ECUADOR ECUASUPRA S.A.";
             }
-            if (upper === "PESQUERA MARYCIELO CIA LTDA") {
+            if (upper === "PESQUERA MARYCIELO CIA LTDA" || upper.includes("MARYCIELO")) {
                 return "PESQUERA MARYCIELO CIA. LTDA.";
             }
-            if (upper === "PUNA") {
-                return "Camaronera Puna";
+            if (upper === "PUNA" || upper === "CAMARONERA PUNA") {
+                return "Puna";
             }
-            if (upper === "CACHUGRAN") {
+            if (upper === "CACHUGRAN" || upper === "CAMARONERA CACHUGRAN") {
                 return "Camaronera Cachugran";
+            }
+            if (upper === "CHONGON" || upper === "CAMARONERA CHONGON") {
+                return "Camaronera Chongón";
+            }
+            if (upper.startsWith("ESTDICONST")) {
+                return "ESTDICONST S.A.";
+            }
+            if (upper.startsWith("BELLITEC")) {
+                return "BELLITEC S.A.";
             }
             return clean;
         }
 
-        function resolveCamaronera(camSab, pisSab, camOmi, pisOmi) {
-            let finalPis = (pisSab || pisOmi || "").toString().trim().toUpperCase().replace(/-/g, '');
+        function resolveCamaronera(camPrimary, pisPrimary, camSecondary, pisSecondary) {
+            let finalPis = (pisPrimary || pisSecondary || "").toString().trim().toUpperCase().replace(/-/g, '');
             let genericName = "OPERADORA Y PROCESADORA DE PRODUCTOS MARINOS";
 
             let rawCam = "Desconocida";
-            if (camSab && camSab.trim() !== "" && !camSab.toUpperCase().includes(genericName)) {
-                rawCam = camSab.trim();
-            } else if (camOmi && camOmi.trim() !== "" && !camOmi.toUpperCase().includes(genericName)) {
-                rawCam = camOmi.trim();
-            } else if (camSab && camSab.trim() !== "") {
-                rawCam = camSab.trim();
-            } else if (camOmi && camOmi.trim() !== "") {
-                rawCam = camOmi.trim();
+            if (camPrimary && camPrimary.trim() !== "" && !camPrimary.toUpperCase().includes(genericName)) {
+                rawCam = camPrimary.trim();
+            } else if (camSecondary && camSecondary.trim() !== "" && !camSecondary.toUpperCase().includes(genericName)) {
+                rawCam = camSecondary.trim();
+            } else if (camPrimary && camPrimary.trim() !== "") {
+                rawCam = camPrimary.trim();
+            } else if (camSecondary && camSecondary.trim() !== "") {
+                rawCam = camSecondary.trim();
             }
 
             let finalCam = normalizeCamaroneraName(rawCam);
@@ -708,16 +793,6 @@
                 }
                 if (finalPis.startsWith("PD")) {
                     return "Puna 2";
-                }
-                let numMatch = finalPis.match(/\d+/);
-                let pisNum = numMatch ? parseInt(numMatch[0], 10) : NaN;
-
-                if (!isNaN(pisNum) && (
-                    (pisNum >= 200 && pisNum <= 299) ||
-                    (pisNum >= 800 && pisNum <= 899) ||
-                    (pisNum >= 900 && pisNum <= 999)
-                )) {
-                    return "Puna";
                 }
                 return "Puna";
             }
@@ -812,6 +887,27 @@
             initProcesamiento();
         }
 
+        // Filtro por defecto al último mes en curso para optimizar velocidad de renderizado
+        function setDefaultMonthFilter(triggerRender = false) {
+            let validDates = db.consolidado
+                .map(d => d.Fecha_ISO)
+                .filter(iso => iso && iso.length === 10)
+                .sort();
+
+            if (validDates.length > 0) {
+                let latestIso = validDates[validDates.length - 1]; // ej. "2026-11-26"
+                let yearMonth = latestIso.substring(0, 7);        // ej. "2026-11"
+                let parts = yearMonth.split('-');
+                let y = parseInt(parts[0], 10);
+                let m = parseInt(parts[1], 10);
+                let lastDay = new Date(y, m, 0).getDate();
+
+                document.getElementById('filterFechaDesde').value = `${yearMonth}-01`;
+                document.getElementById('filterFechaHasta').value = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
+            }
+            if (triggerRender) renderDashboard();
+        }
+
         function initProcesamiento() {
             try {
                 document.getElementById('status-indicator').textContent = "Procesando Datos FIFO...";
@@ -847,7 +943,7 @@
                     Mangle_Total: 0,
                     Otros_Sabores: 0,
                     BOML: 0, BOL: 0, BOF: 0,
-                    // Calidad Detallada (Metabisulfito_Validado)
+                    // Calidad Detallada Porcentual (Metabisulfito_Validado)
                     Has_Meta: false,
                     Lbs_Muestreadas_Meta: 0,
                     Perc_Fresco: 0,
@@ -861,6 +957,7 @@
                     Bact_Leve: 0,
                     // Tiempos FIFO por Convoy (INFROMACION RECEPCION)
                     Has_Recepcion: false,
+                    Enviado_AG: false,
                     Cosecha: "-",
                     Turno_Llegada: "",
                     Dt_Primer_Convoy: null,
@@ -869,6 +966,7 @@
                     Hora_Proceso_Display: "-",
                     Lbs_Recibidas_Recep: 0,
                     Lbs_Procesadas_Recep: 0,
+                    Lbs_Enviadas_Descabezar: 0,
                     Lbs_Pendientes_Patio: 0,
                     Lbs_Dia: 0,
                     Lbs_Noche: 0,
@@ -912,7 +1010,8 @@
                     else if(claseStr === 'D') l.Clases.D += librasFilas;
                 });
 
-                // 2. METABISULFITO_VALIDADO (Ponderación por libras de cada muestreo)
+                // 2. METABISULFITO_VALIDADO (Lectura estricta de columnas porcentuales '(%)')
+                let isMetaUS = detectUSDateFormat(db.metabisulfito, ['Fecha de llegada', 'Fecha de lleg']);
                 let metaTemp = {};
                 db.metabisulfito.forEach(row => {
                     let lote = (getVal(row, ['Lote']) || '').toString().trim();
@@ -924,25 +1023,38 @@
                             manchaL: 0, manchaF: 0, bactL: 0,
                             camaronera: (getVal(row, ['Camaronera']) || '').trim(),
                             piscina: (getVal(row, ['Piscina']) || '').trim(),
-                            fechaLleg: getVal(row, ['Fecha de lleg', 'Fecha de llegada'])
+                            fechaLleg: getVal(row, ['Fecha de llegada', 'Fecha de lleg'])
                         };
                     }
                     
                     let lbs = parseNum(getVal(row, ['Libras recibidas', 'Libras recibida']));
                     if (lbs <= 0) lbs = 1;
+
+                    // Extraer estrictamente las columnas porcentuales '(%)', nunca las de conteo de piezas
+                    let pctFresco = parseNum(getVal(row, ['E. fresco y sano (%)']));
+                    let pctMeta   = parseNum(getVal(row, ['Porcentaje de metabisulfito', 'Porcentaje de metabisulfito (%)']));
+                    let pctFlac   = parseNum(getVal(row, ['E. flacido (%)', 'E. flácido (%)']));
+                    let pctCabFl  = parseNum(getVal(row, ['E. cabeza floja (%)']));
+                    let pctCabDe  = parseNum(getVal(row, ['E. cabeza desprendida (%)']));
+                    let pctMel    = parseNum(getVal(row, ['E. melanosis (%)']));
+                    let pctManL   = parseNum(getVal(row, ['E. mancha leve (%)']));
+                    let pctManF   = parseNum(getVal(row, ['E. mancha fuerte (%)']));
+                    let pctBactL  = parseNum(getVal(row, ['E. hongo/bacteria leve (%)', 'E. hongo/bact (%)']));
+
                     metaTemp[lote].totalLbs += lbs;
-                    metaTemp[lote].frescoSuma += parseNum(getVal(row, ['E. fresco y sano (%)', 'E. fresco y sano'])) * lbs;
-                    metaTemp[lote].metaSuma += parseNum(getVal(row, ['Porcentaje de metabisulfito'])) * lbs;
-                    metaTemp[lote].flacidoSuma += parseNum(getVal(row, ['E. flacido (%)', 'E. flácido (%)', 'E. flacido'])) * lbs;
-                    metaTemp[lote].cabFlojaSuma += parseNum(getVal(row, ['E. cabeza floja (%)', 'E. cabeza floja'])) * lbs;
-                    metaTemp[lote].cabDespSuma += parseNum(getVal(row, ['E. cabeza desprendida (%)', 'E. cabeza desprendida'])) * lbs;
-                    metaTemp[lote].melanosisSuma += parseNum(getVal(row, ['E. melanosis (%)', 'E. melanosis'])) * lbs;
-                    metaTemp[lote].manchaL += parseNum(getVal(row, ['E. mancha leve (%)'])) * lbs;
-                    metaTemp[lote].manchaF += parseNum(getVal(row, ['E. mancha fuerte (%)'])) * lbs;
-                    metaTemp[lote].bactL += parseNum(getVal(row, ['E. hongo/bacteria leve (%)', 'E. hongo/bact (%)'])) * lbs;
+                    metaTemp[lote].frescoSuma += pctFresco * lbs;
+                    metaTemp[lote].metaSuma += pctMeta * lbs;
+                    metaTemp[lote].flacidoSuma += pctFlac * lbs;
+                    metaTemp[lote].cabFlojaSuma += pctCabFl * lbs;
+                    metaTemp[lote].cabDespSuma += pctCabDe * lbs;
+                    metaTemp[lote].melanosisSuma += pctMel * lbs;
+                    metaTemp[lote].manchaL += pctManL * lbs;
+                    metaTemp[lote].manchaF += pctManF * lbs;
+                    metaTemp[lote].bactL += pctBactL * lbs;
                 });
 
-                // 3. SABORES
+                // 3. SABORES (Detección automática de formato de fecha MM/DD/YYYY vs DD/MM/YYYY)
+                let isSaboresUS = detectUSDateFormat(db.sabores, ['Fecha llegada a planta', 'Fecha llegada']);
                 db.sabores.forEach(row => {
                     let lote = (getVal(row, ['Lote']) || '').toString().trim();
                     if(lotesMap.has(lote)) {
@@ -951,9 +1063,11 @@
                         let camSab = (getVal(row, ['Camaronera']) || "").trim();
                         
                         let fechaRaw = getVal(row, ['Fecha llegada a planta', 'Fecha llegada']);
-                        let parsedF = parseFechaLlegada(fechaRaw);
-                        l.Fecha_ISO = parsedF.iso;
-                        l.Fecha_Display = parsedF.display;
+                        let parsedF = parseFechaLlegada(fechaRaw, isSaboresUS);
+                        if (parsedF.iso) {
+                            l.Fecha_ISO = parsedF.iso;
+                            l.Fecha_Display = parsedF.display;
+                        }
 
                         let lbsRecSab = parseNum(getVal(row, ['Libras recibidas total']));
                         l.Libras_Recibidas_Sabores = lbsRecSab > 0 ? lbsRecSab : l.Libras_Recibidas;
@@ -963,7 +1077,7 @@
                         l.Piscina = pisSab || l.Piscina_Omi;
                         
                         l.Camaronera_Oficial = resolveCamaronera(camSab, pisSab, l.Camaronera_Original_Omi, l.Piscina_Omi);
-                        camaronerasSet.add(l.Camaronera_Oficial);
+                        if (l.Camaronera_Oficial !== "Desconocida") camaronerasSet.add(l.Camaronera_Oficial);
                         
                         l.Sabor_Caract = parseNum(getVal(row, ['Sabor caracteristico %']));
                         l.Sabor_Caract_Cola = parseNum(getVal(row, ['Sabor caracteristico cola %']));
@@ -1018,15 +1132,14 @@
                     }
                 });
 
-                // 5. INFROMACION RECEPCION — RECONSTRUCCIÓN FIFO POR CONVOYS
+                // 5. INFROMACION RECEPCION — RECONSTRUCCIÓN FIFO Y MANEJO DE DESVÍOS A PLANTA AG
                 if (db.recepcion && db.recepcion.length > 0) {
-                    // Determinar timestamp máximo de corte en el CSV para proteger registros históricos
                     let maxFileTimestamp = 0;
                     db.recepcion.forEach(r => {
-                        let dtF = buildConsolidatedTimestamp(getVal(r, ['FECHA']), getVal(r, ['HORA LLEGA']));
+                        let dtF = buildConsolidatedTimestamp(getVal(r, ['FECHA']), getVal(r, ['HORA LLEGA']), false);
                         if (dtF && dtF.getTime() > maxFileTimestamp) maxFileTimestamp = dtF.getTime();
                         for (let i = 1; i <= 6; i++) {
-                            let dtC = buildConsolidatedTimestamp(getVal(r, [`HR LLEG ${i}`]), null);
+                            let dtC = buildConsolidatedTimestamp(getVal(r, [`HR LLEG ${i}`]), null, false);
                             if (dtC && dtC.getTime() > maxFileTimestamp) maxFileTimestamp = dtC.getTime();
                         }
                     });
@@ -1036,7 +1149,13 @@
                         if (!lote) return;
 
                         let statusPesca = (getVal(row, ['STATUS PESCA']) || '').toString().toUpperCase().trim();
+                        let estatusEmpaque = (getVal(row, ['ESTATUS DE EMPAQUE']) || '').toString().toUpperCase().trim();
+                        let observacionRec = (getVal(row, ['OBSERVACION']) || '').toString().toUpperCase().trim();
                         let totalRecibido = parseNum(getVal(row, ['TOTAL RECIBIDO']));
+                        let lbsEnvDescab = parseNum(getVal(row, ['LBS ENVIADAS A DESCABEZAR']));
+                        let fechaHoraDescabRaw = getVal(row, ['FECHA Y HORA DESCABEZADA']);
+                        let lbsPatioCol = parseNum(getVal(row, ['LBS EN PATIO']));
+
                         if (statusPesca === 'CANCELADO' && totalRecibido === 0) return;
 
                         if (!lotesMap.has(lote)) {
@@ -1052,20 +1171,19 @@
                         let provRec = (getVal(row, ['PROVEEDOR']) || '').trim();
                         let piscRec = (getVal(row, ['PISC']) || '').trim();
                         let cosechaRec = (getVal(row, ['COSECHA']) || '-').toString().trim() || '-';
-                        let lbsPatioCol = parseNum(getVal(row, ['LBS EN PATIO']));
 
                         if (l.Camaronera_Oficial === "Desconocida" && (provRec || piscRec)) {
                             l.Camaronera_Oficial = resolveCamaronera(provRec, piscRec, l.Camaronera_Original_Omi, l.Piscina_Omi);
-                            camaronerasSet.add(l.Camaronera_Oficial);
+                            if (l.Camaronera_Oficial !== "Desconocida") camaronerasSet.add(l.Camaronera_Oficial);
                         }
                         if (!l.Piscina && piscRec) l.Piscina = piscRec;
 
-                        // Regla 2: Reconstrucción de Entradas (Cola de Convoys 1 a 6)
+                        // Reconstrucción de Entradas (Convoys 1..6)
                         let convoys = [];
                         for (let i = 1; i <= 6; i++) {
                             let hrConvRaw = getVal(row, [`HR LLEG ${i}`, `HR LLEG${i}`]);
                             let lbsConv = parseNum(getVal(row, [`CONVOY ${i}`, `CONVOY${i}`]));
-                            let dtConv = buildConsolidatedTimestamp(hrConvRaw, null);
+                            let dtConv = buildConsolidatedTimestamp(hrConvRaw, null, false);
                             if (dtConv && lbsConv > 0) {
                                 convoys.push({
                                     id: i,
@@ -1076,8 +1194,7 @@
                             }
                         }
 
-                        // Fallback si ningún convoy individual fue digitado
-                        let dtGeneral = buildConsolidatedTimestamp(fechaLlegRaw, horaLlegRaw);
+                        let dtGeneral = buildConsolidatedTimestamp(fechaLlegRaw, horaLlegRaw, false);
                         if (convoys.length === 0 && dtGeneral) {
                             let lbsFallback = totalRecibido > 0 ? totalRecibido : (l.Libras_Recibidas || l.Libras_Procesadas || 0);
                             if (lbsFallback > 0) {
@@ -1102,102 +1219,126 @@
                                 l.Fecha_Display = `${dd}/${mm}/${yyyy}`;
                             }
 
-                            // Regla 3: Reconstrucción de Salidas (Turnos Día y Noche)
                             let lbsDia = parseNum(getVal(row, ['LBS DIA']));
-                            let dtProcDiaRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO']), getVal(row, ['HORA PROCESO']));
+                            let dtProcDiaRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO']), getVal(row, ['HORA PROCESO']), false);
                             let dtProcDia = (lbsDia > 0) ? alignProcessChronology(dtProcDiaRaw, dtFirstConv) : null;
 
                             let lbsNoche = parseNum(getVal(row, ['LBS NOCHE']));
-                            let dtProcNocheRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO2']), getVal(row, ['HORA PROCESO2']));
+                            let dtProcNocheRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO2']), getVal(row, ['HORA PROCESO2']), false);
                             let dtProcNoche = (lbsNoche > 0) ? alignProcessChronology(dtProcNocheRaw, dtFirstConv) : null;
+
+                            // Detectar si el lote fue enviado a planta AG / descabezado sin procesarse en Brisas
+                            let dtDesvioAGRaw = buildConsolidatedTimestamp(fechaHoraDescabRaw, null, false);
+                            let dtDesvioAG = dtDesvioAGRaw ? alignProcessChronology(dtDesvioAGRaw, dtFirstConv) : null;
+                            let esEnvioAG = (lbsDia === 0 && lbsNoche === 0) && (
+                                lbsEnvDescab > 0 ||
+                                observacionRec.includes('ENVIA AG') ||
+                                observacionRec.includes('PLANTA AG') ||
+                                observacionRec.includes('DESCABEZ') ||
+                                dtDesvioAG !== null
+                            );
 
                             let procesos = [];
                             if (dtProcDia && lbsDia > 0) procesos.push({ turno: 'DIA', dtProceso: dtProcDia, lbsProcesadas: lbsDia });
                             if (dtProcNoche && lbsNoche > 0) procesos.push({ turno: 'NOCHE', dtProceso: dtProcNoche, lbsProcesadas: lbsNoche });
                             procesos.sort((a, b) => a.dtProceso.getTime() - b.dtProceso.getTime());
 
-                            // Regla 4: Asignación FIFO (Cruzar Convoys vs. Procesos)
                             let sumPesoHoras = 0;
                             let sumLbsAsignadas = 0;
 
-                            procesos.forEach(proc => {
-                                let lbsPorConsumir = proc.lbsProcesadas;
-                                for (let c of convoys) {
-                                    if (lbsPorConsumir <= 0) break;
-                                    if (c.lbsDisponibles <= 0) continue;
+                            if (!esEnvioAG) {
+                                procesos.forEach(proc => {
+                                    let lbsPorConsumir = proc.lbsProcesadas;
+                                    for (let c of convoys) {
+                                        if (lbsPorConsumir <= 0) break;
+                                        if (c.lbsDisponibles <= 0) continue;
 
-                                    let tomadas = Math.min(c.lbsDisponibles, lbsPorConsumir);
-                                    c.lbsDisponibles -= tomadas;
-                                    lbsPorConsumir -= tomadas;
+                                        let tomadas = Math.min(c.lbsDisponibles, lbsPorConsumir);
+                                        c.lbsDisponibles -= tomadas;
+                                        lbsPorConsumir -= tomadas;
 
-                                    let hrsEspera = Math.max(0, (proc.dtProceso.getTime() - c.dtLlegada.getTime()) / 3600000);
-                                    sumPesoHoras += hrsEspera * tomadas;
-                                    sumLbsAsignadas += tomadas;
-                                }
-                            });
+                                        let hrsEspera = Math.max(0, (proc.dtProceso.getTime() - c.dtLlegada.getTime()) / 3600000);
+                                        sumPesoHoras += hrsEspera * tomadas;
+                                        sumLbsAsignadas += tomadas;
+                                    }
+                                });
+                            }
 
-                            let lbsRemanentesConvoys = convoys.reduce((acc, c) => acc + c.lbsDisponibles, 0);
                             let lbsRecTot = totalRecibido > 0 ? totalRecibido : convoys.reduce((acc, c) => acc + c.lbsIniciales, 0);
                             let lbsProcTot = lbsDia + lbsNoche;
-                            let lbsPendientes = lbsPatioCol > 0 ? lbsPatioCol : Math.max(0, lbsRemanentesConvoys);
+                            let lbsPendientes = (esEnvioAG || estatusEmpaque === 'PROCESADO') ? 0 : (lbsPatioCol > 0 ? lbsPatioCol : Math.max(0, convoys.reduce((acc, c) => acc + c.lbsDisponibles, 0)));
 
                             l.Has_Recepcion = true;
-                            l.Cosecha = cosechaRec;
+                            l.Enviado_AG = esEnvioAG;
+                            l.Cosecha = esEnvioAG ? 'Enviado a AG' : cosechaRec;
                             l.Turno_Llegada = turnoRaw;
                             l.Convoys_Count = convoys.length;
                             l.Dt_Primer_Convoy = dtFirstConv;
                             l.Hora_Llegada_Display = formatTimeHHMM(dtFirstConv);
                             l.Lbs_Recibidas_Recep = lbsRecTot;
                             l.Lbs_Procesadas_Recep = lbsProcTot;
+                            l.Lbs_Enviadas_Descabezar = lbsEnvDescab;
                             l.Lbs_Pendientes_Patio = lbsPendientes;
                             l.Lbs_Dia = lbsDia;
                             l.Lbs_Noche = lbsNoche;
                             l.Es_Fraccionado = (lbsDia > 0 && lbsNoche > 0);
 
-                            if (procesos.length > 0) {
-                                l.Dt_Primer_Proceso = procesos[0].dtProceso;
-                                l.Hora_Proceso_Display = procesos.map(p => `${formatTimeHHMM(p.dtProceso)} (${p.turno === 'DIA' ? 'D' : 'N'})`).join(' / ');
-                                l.Espera_Primer_Ingreso_Hrs = Math.max(0, (procesos[0].dtProceso.getTime() - dtFirstConv.getTime()) / 3600000);
-                            }
+                            if (esEnvioAG) {
+                                // Excluir del cálculo de espera de proceso en Brisas para no alterar las gráficas
+                                l.Hora_Proceso_Display = dtDesvioAG ? `${formatTimeHHMM(dtDesvioAG)} (Enviado a AG)` : 'Enviado a AG';
+                                l.Espera_Ponderada_Hrs = null;
+                                l.Espera_Primer_Ingreso_Hrs = null;
+                                l.Espera_Activa_Patio_Hrs = null;
+                            } else {
+                                if (procesos.length > 0) {
+                                    l.Dt_Primer_Proceso = procesos[0].dtProceso;
+                                    l.Hora_Proceso_Display = procesos.map(p => `${formatTimeHHMM(p.dtProceso)} (${p.turno === 'DIA' ? 'D' : 'N'})`).join(' / ');
+                                    l.Espera_Primer_Ingreso_Hrs = Math.max(0, (procesos[0].dtProceso.getTime() - dtFirstConv.getTime()) / 3600000);
+                                }
 
-                            if (sumLbsAsignadas > 0) {
-                                l.Espera_Ponderada_Hrs = sumPesoHoras / sumLbsAsignadas;
-                            }
+                                if (sumLbsAsignadas > 0) {
+                                    l.Espera_Ponderada_Hrs = sumPesoHoras / sumLbsAsignadas;
+                                }
 
-                            // Regla 5.3: Espera activa en patio (protegida contra archivos históricos cerrados)
-                            let convoyPendienteMasAntiguo = convoys.find(c => c.lbsDisponibles > 0);
-                            if (convoyPendienteMasAntiguo) {
-                                let nowMs = Date.now();
-                                // Si el archivo es histórico (> 36h antiguo respecto a hoy), usar el corte máximo del CSV en lugar de new Date()
-                                let refCorteMs = (maxFileTimestamp > 0 && (nowMs - maxFileTimestamp) > 36 * 3600000) ? maxFileTimestamp : nowMs;
-                                let hrsActiva = Math.max(0, (refCorteMs - convoyPendienteMasAntiguo.dtLlegada.getTime()) / 3600000);
-                                l.Espera_Activa_Patio_Hrs = hrsActiva;
+                                // Solo calcular espera activa si realmente quedan libras pendientes en patio y el lote no está cerrado
+                                let convoyPendienteMasAntiguo = convoys.find(c => c.lbsDisponibles > 0);
+                                if (convoyPendienteMasAntiguo && lbsPendientes > 0 && estatusEmpaque !== 'PROCESADO') {
+                                    let nowMs = Date.now();
+                                    let refCorteMs = (maxFileTimestamp > 0 && (nowMs - maxFileTimestamp) > 36 * 3600000) ? maxFileTimestamp : nowMs;
+                                    let hrsActiva = Math.max(0, (refCorteMs - convoyPendienteMasAntiguo.dtLlegada.getTime()) / 3600000);
+                                    l.Espera_Activa_Patio_Hrs = hrsActiva;
 
-                                // Si el lote aún tiene 0 lbs procesadas en línea, usar su espera en patio para que no quede sin métrica
-                                if (l.Espera_Ponderada_Hrs === null && hrsActiva <= 72) {
-                                    l.Espera_Ponderada_Hrs = hrsActiva;
+                                    if (l.Espera_Ponderada_Hrs === null && hrsActiva <= 72) {
+                                        l.Espera_Ponderada_Hrs = hrsActiva;
+                                    }
                                 }
                             }
                         }
                     });
                 }
 
-                // Consolidación final por Lote
+                // Consolidación final por Lote y homologación universal de Camaroneras
                 Array.from(lotesMap.values()).forEach(l => {
                     let lote = l.Lote;
+                    let metaCam = metaTemp[lote] ? metaTemp[lote].camaronera : null;
+                    let metaPis = metaTemp[lote] ? metaTemp[lote].piscina : null;
+
                     if (l.Camaronera_Oficial === "Desconocida") {
-                        let metaCam = metaTemp[lote] ? metaTemp[lote].camaronera : null;
-                        let metaPis = metaTemp[lote] ? metaTemp[lote].piscina : null;
-                        if (metaCam || metaPis || l.Camaronera_Original_Omi || l.Piscina_Omi) {
-                            l.Camaronera_Oficial = resolveCamaronera(metaCam, metaPis, l.Camaronera_Original_Omi, l.Piscina_Omi);
-                            camaronerasSet.add(l.Camaronera_Oficial);
-                        }
+                        l.Camaronera_Oficial = resolveCamaronera(metaCam, metaPis, l.Camaronera_Original_Omi, l.Piscina_Omi);
+                    } else {
+                        l.Camaronera_Oficial = resolveCamaronera(l.Camaronera_Oficial, l.Piscina, metaCam, metaPis);
+                    }
+
+                    if (l.Camaronera_Oficial && l.Camaronera_Oficial !== "Desconocida") {
+                        camaronerasSet.add(l.Camaronera_Oficial);
                     }
 
                     if (!l.Fecha_ISO && metaTemp[lote] && metaTemp[lote].fechaLleg) {
-                        let parsedMetaF = parseFechaLlegada(metaTemp[lote].fechaLleg);
-                        l.Fecha_ISO = parsedMetaF.iso;
-                        l.Fecha_Display = parsedMetaF.display;
+                        let parsedMetaF = parseFechaLlegada(metaTemp[lote].fechaLleg, isMetaUS);
+                        if (parsedMetaF.iso) {
+                            l.Fecha_ISO = parsedMetaF.iso;
+                            l.Fecha_Display = parsedMetaF.display;
+                        }
                     }
 
                     if (l.Libras_Recibidas_Sabores === 0) {
@@ -1243,6 +1384,8 @@
                     });
                 }
 
+                // Activar por defecto el último mes en curso para optimizar velocidad
+                setDefaultMonthFilter(false);
                 renderDashboard();
                 
             } catch (err) {
@@ -1266,7 +1409,7 @@
             document.getElementById('filterClase').value = 'ALL';
             if(document.getElementById('filterTurnoRecep')) document.getElementById('filterTurnoRecep').value = 'ALL';
             if(document.getElementById('filterFlujoRecep')) document.getElementById('filterFlujoRecep').value = 'ALL';
-            if(document.getElementById('searchLoteRecep')) document.getElementById('searchLoteRecep').value = '';
+            clearScatterSelection(false);
             renderDashboard();
         }
 
@@ -1296,10 +1439,13 @@
         function renderDashboard() {
             try {
                 const data = getFilteredData();
-                document.getElementById('filter-summary').innerText = `Mostrando ${data.length} de ${db.consolidado.length} lotes`;
+                let fDesde = document.getElementById('filterFechaDesde').value;
+                let fHasta = document.getElementById('filterFechaHasta').value;
+                let periodoTxt = (fDesde || fHasta) ? ` | Período: ${fDesde || 'Inicio'} a ${fHasta || 'Hoy'}` : ' | Histórico Global';
+                document.getElementById('filter-summary').innerText = `Mostrando ${data.length} de ${db.consolidado.length} lotes${periodoTxt}`;
 
                 if(data.length === 0) {
-                    document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="19" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
+                    document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="20" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
                     document.getElementById('tbody-ranking').innerHTML = '';
                     document.getElementById('tbody-ranking-sabores').innerHTML = '';
                     document.getElementById('tbody-recep-lotes').innerHTML = '';
@@ -1388,7 +1534,7 @@
                     }
                 });
 
-                // --- PESTAÑA 2: MATRIZ ORGANOLÉPTICA ---
+                // --- PESTAÑA 2: MATRIZ ORGANOLÉPTICA (Con columna Fresco y Sano %) ---
                 let cls = { A:{lbs:0}, B:{lbs:0}, C:{lbs:0}, D:{lbs:0} };
                 data.forEach(d => {
                     if(d.Clase_Valida === 'A') cls.A.lbs += d.Libras_Procesadas;
@@ -1446,6 +1592,9 @@
                     let colorC = pC > 0 ? 'text-rose-600' : 'text-slate-600';
                     let colorD = pD > 0 ? 'text-indigo-600' : 'text-slate-600';
 
+                    let frescoTxt = d.Has_Meta ? `${d.Perc_Fresco.toFixed(1)}%` : '-';
+                    let frescoColor = !d.Has_Meta ? 'text-slate-400' : (d.Perc_Fresco >= 60 ? 'text-teal-700 font-bold' : (d.Perc_Fresco >= 46 ? 'text-amber-700 font-bold' : 'text-rose-700 font-bold'));
+
                     let combStyle = d.Comb_Entero_Total > 0 ? 'bg-indigo-100 text-indigo-950 font-black' : 'bg-indigo-50/40 text-slate-400';
                     let tierraStyle = d.Tierra_Entero_Total > 15 ? 'bg-amber-100 text-amber-900 font-bold' : (d.Tierra_Entero_Total > 0 ? 'bg-slate-50 text-slate-800 font-semibold' : 'bg-slate-50 text-slate-400');
                     let otrosStyle = d.Otros_Sabores > 0 ? 'bg-slate-100 text-slate-800 font-bold' : 'bg-slate-50 text-slate-400';
@@ -1454,15 +1603,16 @@
                         <td class="font-mono font-bold">${d.Lote}</td>
                         <td class="text-xs text-slate-500 font-mono">${d.Fecha_Display}</td>
                         <td class="font-semibold">${d.Camaronera_Oficial}</td>
-                        <td>${d.Piscina}</td>
+                        <td>${d.Piscina || '-'}</td>
                         <td class="font-mono">${d.Libras_Procesadas.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
-                        <td class="font-mono text-slate-700">${meta.toFixed(1)}</td>
+                        <td class="font-mono text-slate-700">${d.Has_Meta ? meta.toFixed(1) + '%' : '-'}</td>
+                        <td class="bg-teal-50/60 ${frescoColor}">${frescoTxt}</td>
                         <td class="bg-emerald-50/50 font-bold text-emerald-700">${(d.Sabor_Caract || 0).toFixed(1)}%</td>
                         <td class="${combStyle}">${d.Comb_Entero_Total.toFixed(1)}%</td>
                         <td class="${tierraStyle}">${d.Tierra_Entero_Total.toFixed(1)}%</td>
                         <td class="${otrosStyle}">${d.Otros_Sabores.toFixed(1)}%</td>
-                        <td>${mlf.toFixed(1)}%</td>
-                        <td>${bac.toFixed(1)}%</td>
+                        <td>${d.Has_Meta ? mlf.toFixed(1) + '%' : '-'}</td>
+                        <td>${d.Has_Meta ? bac.toFixed(1) + '%' : '-'}</td>
                         <td class="bg-amber-50 font-medium text-amber-900">${d.BOML.toFixed(1)}%</td>
                         <td class="bg-amber-50 font-medium text-amber-900">${d.BOL.toFixed(1)}%</td>
                         <td class="bg-amber-50 font-bold text-amber-900">${d.BOF.toFixed(1)}%</td>
@@ -1473,11 +1623,14 @@
                     </tr>`;
                 }).join('');
 
-                // --- PESTAÑA 3: RANKING GENERAL ---
+                // --- PESTAÑA 3: RANKING GENERAL (Camaroneras validadas, sin filas vacías + % Fresco y Sano) ---
                 let provs = {};
                 data.forEach(d => {
-                    let p = d.Camaronera_Oficial || "Desconocida";
-                    if(!provs[p]) provs[p] = { lotes:0, lbsProc:0, a:0, b:0, c:0, d:0, rej:0 };
+                    let p = d.Camaronera_Oficial;
+                    if (!p || p === "Desconocida") return;
+                    if (d.Libras_Procesadas <= 0 && d.Libras_Recibidas <= 0) return;
+
+                    if(!provs[p]) provs[p] = { lotes:0, lbsProc:0, a:0, b:0, c:0, d:0, rej:0, frescoSuma:0, lbsMeta:0 };
                     provs[p].lotes++;
                     provs[p].lbsProc += d.Libras_Procesadas;
                     provs[p].a += d.Clases.A; 
@@ -1485,6 +1638,11 @@
                     provs[p].c += d.Clases.C;
                     provs[p].d += d.Clases.D;
                     provs[p].rej += d.Rechazo;
+                    if (d.Has_Meta) {
+                        let w = d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 1;
+                        provs[p].frescoSuma += d.Perc_Fresco * w;
+                        provs[p].lbsMeta += w;
+                    }
                 });
                 
                 let rankArr = Object.keys(provs).map(k => {
@@ -1494,15 +1652,16 @@
                     let pc = o.lbsProc > 0 ? (o.c / o.lbsProc) * 100 : 0;
                     let pd = o.lbsProc > 0 ? (o.d / o.lbsProc) * 100 : 0;
                     let pr = o.lbsProc > 0 ? (o.rej / o.lbsProc) * 100 : 0;
+                    let pFresco = o.lbsMeta > 0 ? (o.frescoSuma / o.lbsMeta) : null;
                     
                     let totalPct = pa + pb + pc + pd + pr;
                     if(totalPct > 100) { pa = (pa/totalPct)*100; pb = (pb/totalPct)*100; pc = (pc/totalPct)*100; pd = (pd/totalPct)*100; pr = (pr/totalPct)*100; }
 
                     return { 
-                        nombre: k, lotes: o.lotes, lbs: o.lbsProc, 
+                        nombre: k, lotes: o.lotes, lbs: o.lbsProc, pFresco: pFresco,
                         pa: pa, pb: pb, pc: pc, pd: pd, pr: pr
                     };
-                }).sort((a,b) => {
+                }).filter(r => r.lbs > 0).sort((a,b) => {
                     if (Math.abs(b.pa - a.pa) > 0.05) return b.pa - a.pa;
                     return b.lbs - a.lbs;
                 });
@@ -1513,6 +1672,7 @@
                         <td class="font-bold">${r.nombre}</td>
                         <td>${r.lotes}</td>
                         <td class="font-mono">${r.lbs.toLocaleString('en-US', {maximumFractionDigits:0})} lb</td>
+                        <td class="bg-teal-50/40 font-bold text-teal-700">${r.pFresco !== null ? r.pFresco.toFixed(1) + '%' : '-'}</td>
                         <td class="text-emerald-600 font-bold">${r.pa.toFixed(1)}%</td>
                         <td class="text-amber-500 font-bold">${r.pb.toFixed(1)}%</td>
                         <td class="text-rose-500 font-bold">${r.pc.toFixed(1)}%</td>
@@ -1546,11 +1706,36 @@
             }
         }
 
+        function clearScatterSelection(reRenderChart = true) {
+            selectedScatterLote = null;
+            let searchInput = document.getElementById("searchLoteRecep");
+            if (searchInput) searchInput.value = "";
+            let badge = document.getElementById("scatter-selected-badge");
+            if (badge) badge.classList.add("hidden");
+            filterRecepLoteTable();
+            if (reRenderChart && charts['chartScatterFlacidez']) {
+                charts['chartScatterFlacidez'].update();
+            }
+        }
+
+        function selectScatterLote(loteStr) {
+            selectedScatterLote = loteStr;
+            let searchInput = document.getElementById("searchLoteRecep");
+            if (searchInput) searchInput.value = loteStr;
+            let badge = document.getElementById("scatter-selected-badge");
+            if (badge) {
+                badge.innerText = `Lote filtrado: ${loteStr}`;
+                badge.classList.remove("hidden");
+            }
+            filterRecepLoteTable();
+            let panel = document.getElementById("panel-tabla-recep");
+            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
         function renderTiemposRecepcionTab(data) {
             let turnoFilter = document.getElementById('filterTurnoRecep') ? document.getElementById('filterTurnoRecep').value : 'ALL';
             let flujoFilter = document.getElementById('filterFlujoRecep') ? document.getElementById('filterFlujoRecep').value : 'ALL';
 
-            // Lotes que tienen calidad muestreada o datos de recepción FIFO
             let lotesTab5 = data.filter(d => {
                 if (!d.Has_Meta && !d.Has_Recepcion) return false;
                 if (turnoFilter !== 'ALL') {
@@ -1565,13 +1750,14 @@
             });
 
             let lotesCalidad = lotesTab5.filter(d => d.Has_Meta);
-            let lotesConTiempos = lotesTab5.filter(d => d.Has_Recepcion && d.Espera_Ponderada_Hrs !== null);
-            let lotesCruzados = lotesTab5.filter(d => d.Has_Meta && d.Has_Recepcion && d.Espera_Ponderada_Hrs !== null);
+            // Excluir lotes enviados a AG de las estadísticas y gráficas de espera de proceso en Brisas
+            let lotesConTiempos = lotesTab5.filter(d => d.Has_Recepcion && !d.Enviado_AG && d.Espera_Ponderada_Hrs !== null);
+            let lotesCruzados = lotesTab5.filter(d => d.Has_Meta && d.Has_Recepcion && !d.Enviado_AG && d.Espera_Ponderada_Hrs !== null);
 
             document.getElementById('recep-cruce-summary').innerText = 
-                `Lotes Recepción FIFO: ${lotesConTiempos.length} | Con Calidad: ${lotesCalidad.length} | Cruzados: ${lotesCruzados.length}`;
+                `Lotes FIFO Brisas: ${lotesConTiempos.length} | Con Calidad (%): ${lotesCalidad.length} | Cruzados: ${lotesCruzados.length}`;
 
-            // 1. Cálculo de KPIs globales (ponderados por volumen)
+            // 1. KPIs globales (usando exclusivamente columnas porcentuales '(%)')
             let sumLbsCal = 0, sumFresco = 0, sumFlacido = 0, sumCabFloja = 0, sumCabDesp = 0, sumMelanosis = 0;
             lotesCalidad.forEach(d => {
                 let w = d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 1;
@@ -1616,7 +1802,7 @@
             document.getElementById('kpi-cal-cd-mel').innerText = `${(pctCabDesp + pctMelanosis).toFixed(1)}%`;
             document.getElementById('kpi-cal-cd-mel-sub').innerText = `Cab. Desp: ${pctCabDesp.toFixed(1)}% | Melanosis: ${pctMelanosis.toFixed(1)}%`;
 
-            // 2. Gráfico 1: Deterioro por Rangos de Espera FIFO (<4h, 4-8h, 8-12h, >12h)
+            // 2. Gráfico 1: Deterioro por Rangos de Espera FIFO
             const rangos = [
                 { label: '< 4h', min: 0, max: 4, lbs: 0, lotes: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
                 { label: '4 - 8h', min: 4, max: 8, lbs: 0, lotes: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
@@ -1668,7 +1854,7 @@
                 }
             });
 
-            // 3. Gráfico 2: Comparativa Lotes Directos vs Lotes Fraccionados (Día/Noche)
+            // 3. Gráfico 2: Comparativa Lotes Directos vs Lotes Fraccionados
             const gruposFlujo = {
                 directo: { label: 'Lotes Directos (1 Turno)', lbs: 0, lotes: 0, esp: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 },
                 fracc: { label: 'Lotes Fraccionados (Día/Noche)', lbs: 0, lotes: 0, esp: 0, fresco: 0, flacido: 0, cabFloja: 0, cabDesp: 0, melanosis: 0 }
@@ -1731,7 +1917,8 @@
                 }
             });
 
-            // 4. Gráfico 3: Dispersión Espera FIFO (Horas) vs. % Flácido y Cabeza Floja con líneas de tendencia
+            // 4. Gráfico 3 Interactivo: Dispersión Espera FIFO vs. % Fresco y Sano, % Flácido y % Cabeza Floja
+            let ptsFresco = [];
             let ptsFlacido = [];
             let ptsCabFloja = [];
             let maxHora = 24;
@@ -1745,19 +1932,22 @@
                     piscina: d.Piscina || '-',
                     lbs: d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 0
                 };
+                ptsFresco.push({ x: hrs, y: +(d.Perc_Fresco.toFixed(2)), ...metaInfo });
                 ptsFlacido.push({ x: hrs, y: +(d.Perc_Flacido.toFixed(2)), ...metaInfo });
                 ptsCabFloja.push({ x: hrs, y: +(d.Perc_Cab_Floja.toFixed(2)), ...metaInfo });
             });
 
+            let trendFresco = calcLinearTrend(ptsFresco, maxHora);
             let trendFlacido = calcLinearTrend(ptsFlacido, maxHora);
             let trendCabFloja = calcLinearTrend(ptsCabFloja, maxHora);
 
             let statsEl = document.getElementById('scatter-stats-summary');
             if (statsEl) {
                 if (trendFlacido.slope !== undefined && trendCabFloja.slope !== undefined) {
+                    let sFres = (trendFresco.slope >= 0 ? '+' : '') + trendFresco.slope.toFixed(2) + '%/h';
                     let sFlac = (trendFlacido.slope >= 0 ? '+' : '') + trendFlacido.slope.toFixed(2) + '%/h';
                     let sCab = (trendCabFloja.slope >= 0 ? '+' : '') + trendCabFloja.slope.toFixed(2) + '%/h';
-                    statsEl.innerText = `Tasa Flácido: ${sFlac} | Tasa Cab. Floja: ${sCab} (${ptsFlacido.length} lotes)`;
+                    statsEl.innerText = `Fresco: ${sFres} | Flácido: ${sFlac} | Cab. Floja: ${sCab} (${ptsFlacido.length} lotes)`;
                 } else {
                     statsEl.innerText = `Datos insuficientes para regresión (${ptsFlacido.length} lotes)`;
                 }
@@ -1766,35 +1956,67 @@
             let scatterDatasets = [
                 {
                     type: 'scatter',
+                    label: '% Fresco y Sano',
+                    data: ptsFresco,
+                    yAxisID: 'yFresco',
+                    backgroundColor: '#10b981',
+                    borderColor: '#6ee7b7',
+                    borderWidth: 1,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    order: 2
+                },
+                {
+                    type: 'scatter',
                     label: '% Flácido',
                     data: ptsFlacido,
+                    yAxisID: 'yDefectos',
                     backgroundColor: '#0284c7',
                     borderColor: '#38bdf8',
                     borderWidth: 1,
                     pointRadius: 5,
-                    pointHoverRadius: 7,
+                    pointHoverRadius: 8,
                     order: 2
                 },
                 {
                     type: 'scatter',
                     label: '% Cabeza Floja',
                     data: ptsCabFloja,
+                    yAxisID: 'yDefectos',
                     backgroundColor: '#ea580c',
                     borderColor: '#fb923c',
                     borderWidth: 1,
                     pointRadius: 5,
-                    pointHoverRadius: 7,
+                    pointHoverRadius: 8,
                     order: 2
                 }
             ];
+
+            if (trendFresco.linePoints && trendFresco.linePoints.length === 2) {
+                scatterDatasets.push({
+                    type: 'line',
+                    label: 'Tendencia % Fresco y Sano',
+                    data: trendFresco.linePoints,
+                    yAxisID: 'yFresco',
+                    borderColor: '#34d399',
+                    borderWidth: 2,
+                    borderDash: [6, 5],
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    fill: false,
+                    tension: 0,
+                    order: 1
+                });
+            }
 
             if (trendFlacido.linePoints && trendFlacido.linePoints.length === 2) {
                 scatterDatasets.push({
                     type: 'line',
                     label: 'Tendencia % Flácido',
                     data: trendFlacido.linePoints,
+                    yAxisID: 'yDefectos',
                     borderColor: '#7dd3fc',
-                    borderWidth: 2.5,
+                    borderWidth: 2,
                     borderDash: [6, 5],
                     pointRadius: 0,
                     pointHoverRadius: 0,
@@ -1809,8 +2031,9 @@
                     type: 'line',
                     label: 'Tendencia % Cabeza Floja',
                     data: trendCabFloja.linePoints,
+                    yAxisID: 'yDefectos',
                     borderColor: '#fdba74',
-                    borderWidth: 2.5,
+                    borderWidth: 2,
                     borderDash: [6, 5],
                     pointRadius: 0,
                     pointHoverRadius: 0,
@@ -1827,6 +2050,16 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: { mode: 'nearest', intersect: true },
+                    onClick: (event, elements, chart) => {
+                        if (elements && elements.length > 0) {
+                            let el = elements[0];
+                            let ds = chart.data.datasets[el.datasetIndex];
+                            let pt = ds && ds.data ? ds.data[el.index] : null;
+                            if (pt && pt.lote) {
+                                selectScatterLote(pt.lote);
+                            }
+                        }
+                    },
                     scales: {
                         x: {
                             type: 'linear',
@@ -1837,11 +2070,22 @@
                             grid: { color: 'rgba(148, 163, 184, 0.15)' },
                             title: { display: true, text: 'Horas de Espera (FIFO)', color: '#f1f5f9', font: { weight: 'bold', size: 12 } }
                         },
-                        y: {
+                        yDefectos: {
+                            type: 'linear',
+                            position: 'left',
                             beginAtZero: true,
-                            ticks: { color: '#cbd5e1' },
+                            ticks: { color: '#7dd3fc' },
                             grid: { color: 'rgba(148, 163, 184, 0.15)' },
-                            title: { display: true, text: '% Defectos', color: '#f1f5f9', font: { weight: 'bold', size: 12 } }
+                            title: { display: true, text: '% Flácido y Cabeza Floja', color: '#7dd3fc', font: { weight: 'bold', size: 12 } }
+                        },
+                        yFresco: {
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#6ee7b7' },
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: '% Fresco y Sano', color: '#6ee7b7', font: { weight: 'bold', size: 12 } }
                         }
                     },
                     plugins: {
@@ -1861,7 +2105,7 @@
                                     return [
                                         `${ctx.dataset.label}: ${raw.y.toFixed(1)}% | Espera FIFO: ${raw.x.toFixed(1)} h`,
                                         `Lote: ${raw.lote} (${raw.camaronera} - Pisc. ${raw.piscina})`,
-                                        `Libras Muestreadas: ${raw.lbs.toLocaleString('en-US', {maximumFractionDigits: 0})} lb`
+                                        `Libras Muestreadas: ${raw.lbs.toLocaleString('en-US', {maximumFractionDigits: 0})} lb (Clic para filtrar lote)`
                                     ];
                                 }
                             }
@@ -1870,9 +2114,16 @@
                 }
             });
 
-            // 5. NUEVA TABLA: Monitoreo Recepción FIFO y Defectos por Lote
+            // Evento Doble Clic en el canvas para quitar el filtro de lote automáticamente
+            let scatterCanvas = document.getElementById('chartScatterFlacidez');
+            if (scatterCanvas) {
+                scatterCanvas.ondblclick = function() {
+                    clearScatterSelection(true);
+                };
+            }
+
+            // 5. TABLA: Monitoreo Recepción FIFO y Defectos por Lote
             let lotesOrdenados = [...lotesTab5].sort((a, b) => {
-                // Ordenar por fecha más reciente primero y luego por lote descendente
                 if (a.Fecha_ISO !== b.Fecha_ISO) return b.Fecha_ISO.localeCompare(a.Fecha_ISO);
                 return b.Lote.localeCompare(a.Lote);
             });
@@ -1880,7 +2131,11 @@
             document.getElementById('tbody-recep-lotes').innerHTML = lotesOrdenados.map(d => {
                 let hrsVal = d.Espera_Ponderada_Hrs;
                 let esperaBadge = '<span class="text-slate-400 text-xs">-</span>';
-                if (hrsVal !== null && !isNaN(hrsVal)) {
+                if (d.Enviado_AG) {
+                    esperaBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md border font-bold text-xs bg-purple-50 text-purple-800 border-purple-200">
+                        <i class="fa-solid fa-truck-fast text-[10px]"></i> Enviado a AG
+                    </span>`;
+                } else if (hrsVal !== null && !isNaN(hrsVal)) {
                     let badgeStyle = hrsVal <= 4
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : (hrsVal <= 8
@@ -1897,14 +2152,19 @@
                        </span>`
                     : '<span class="text-slate-400 text-xs">-</span>';
 
-                let cosechaBadge = (d.Cosecha && d.Cosecha !== '-')
-                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200 font-semibold text-[11px]">
+                let cosechaBadge = '-';
+                if (d.Enviado_AG) {
+                    cosechaBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 text-purple-900 border border-purple-300 font-bold text-[11px]">
+                        <i class="fa-solid fa-share"></i> Enviado a AG
+                    </span>`;
+                } else if (d.Cosecha && d.Cosecha !== '-') {
+                    cosechaBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200 font-semibold text-[11px]">
                         ${d.Cosecha.toUpperCase().includes('HIELO') ? '<i class="fa-regular fa-snowflake"></i>' : ''} ${d.Cosecha}
-                       </span>`
-                    : '<span class="text-slate-400 text-xs">-</span>';
+                       </span>`;
+                }
 
                 let lbsRec = d.Lbs_Recibidas_Recep || d.Libras_Recibidas || d.Lbs_Muestreadas_Meta || 0;
-                let lbsProc = d.Lbs_Procesadas_Recep || d.Libras_Procesadas || 0;
+                let lbsProc = d.Enviado_AG ? (d.Lbs_Enviadas_Descabezar || 0) : (d.Lbs_Procesadas_Recep || d.Libras_Procesadas || 0);
                 let lbsPend = d.Has_Recepcion ? d.Lbs_Pendientes_Patio : Math.max(0, lbsRec - lbsProc);
 
                 let manchaTotal = (d.Mancha_Leve || 0) + (d.Mancha_Fuerte || 0);
@@ -1936,7 +2196,6 @@
                 </tr>`;
             }).join('');
 
-            // Reaplicar filtro del buscador de lote si hay texto escrito
             filterRecepLoteTable();
         }
 
@@ -1997,59 +2256,72 @@
                     lotesConCombustible++;
                 }
 
-                let cam = d.Camaronera_Oficial || "Desconocida";
-                if (!provSabores[cam]) {
-                    provSabores[cam] = {
-                        nombre: cam, lotes: 0, lotesComb: 0,
-                        lbsTotal: 0, lbsEntero: 0,
-                        lbsCaract: 0, lbsCombEnt: 0, lbsCML: 0, lbsCL: 0, lbsCF: 0, lbsCombCola: 0,
-                        lbsTierra: 0, lbsChoclo: 0, lbsOtrosMG: 0
-                    };
-                }
-                let p = provSabores[cam];
-                p.lotes++;
-                p.lbsTotal += lbsLote;
-                if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) p.lotesComb++;
-                p.lbsCombCola += l_combCola;
-
-                if (totalSabEntero > 0) {
-                    p.lbsEntero   += lbsLote;
-                    p.lbsCaract   += l_caract;
-                    p.lbsCombEnt  += l_combEnt;
-                    p.lbsCML      += l_cml;
-                    p.lbsCL       += l_cl;
-                    p.lbsCF       += l_cf;
-                    p.lbsTierra   += l_tierra;
-                    p.lbsChoclo   += l_choclo;
-                    p.lbsOtrosMG  += (l_gallinaza + l_mangle);
-                }
-
-                if (d.Fecha_ISO) {
-                    if (!trendMap[d.Fecha_ISO]) {
-                        trendMap[d.Fecha_ISO] = { 
-                            fecha: d.Fecha_ISO, 
+                let cam = d.Camaronera_Oficial;
+                if (cam && cam !== "Desconocida" && (lbsLote > 0 || totalSabEntero > 0)) {
+                    if (!provSabores[cam]) {
+                        provSabores[cam] = {
+                            nombre: cam, lotes: 0, lotesComb: 0,
                             lbsTotal: 0, lbsEntero: 0,
-                            lbsCombEnt: 0, lbsCML: 0, lbsCL: 0, lbsCF: 0, lbsCombCola: 0,
-                            lbsTierra: 0, lbsChoclo: 0, lbsMangle: 0, lbsGallinaza: 0,
-                            lotesComb: 0, lotesTotal: 0
+                            lbsCaract: 0, lbsCombEnt: 0, lbsCML: 0, lbsCL: 0, lbsCF: 0, lbsCombCola: 0,
+                            lbsTierra: 0, lbsChoclo: 0, lbsOtrosMG: 0,
+                            frescoSuma: 0, lbsMeta: 0
                         };
                     }
-                    let t = trendMap[d.Fecha_ISO];
-                    t.lotesTotal++;
-                    t.lbsTotal += lbsLote;
-                    t.lbsCombCola += l_combCola;
-                    if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) t.lotesComb++;
+                    let p = provSabores[cam];
+                    p.lotes++;
+                    p.lbsTotal += lbsLote;
+                    if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) p.lotesComb++;
+                    p.lbsCombCola += l_combCola;
+
+                    if (d.Has_Meta) {
+                        let wMeta = d.Lbs_Muestreadas_Meta || lbsLote || 1;
+                        p.frescoSuma += d.Perc_Fresco * wMeta;
+                        p.lbsMeta += wMeta;
+                    }
 
                     if (totalSabEntero > 0) {
-                        t.lbsEntero    += lbsLote;
-                        t.lbsCombEnt   += l_combEnt;
-                        t.lbsCML       += l_cml;
-                        t.lbsCL        += l_cl;
-                        t.lbsCF        += l_cf;
-                        t.lbsTierra    += l_tierra;
-                        t.lbsChoclo    += l_choclo;
-                        t.lbsMangle    += l_mangle;
-                        t.lbsGallinaza += l_gallinaza;
+                        p.lbsEntero   += lbsLote;
+                        p.lbsCaract   += l_caract;
+                        p.lbsCombEnt  += l_combEnt;
+                        p.lbsCML      += l_cml;
+                        p.lbsCL       += l_cl;
+                        p.lbsCF       += l_cf;
+                        p.lbsTierra   += l_tierra;
+                        p.lbsChoclo   += l_choclo;
+                        p.lbsOtrosMG  += (l_gallinaza + l_mangle);
+                    }
+                }
+
+                // Solo agrupar fechas operativas válidas (2024-2027) para evitar ejes con años erróneos
+                if (d.Fecha_ISO && d.Fecha_ISO.length === 10) {
+                    let yr = parseInt(d.Fecha_ISO.substring(0, 4), 10);
+                    if (isValidOperationalYear(yr)) {
+                        if (!trendMap[d.Fecha_ISO]) {
+                            trendMap[d.Fecha_ISO] = { 
+                                fecha: d.Fecha_ISO, 
+                                lbsTotal: 0, lbsEntero: 0,
+                                lbsCombEnt: 0, lbsCML: 0, lbsCL: 0, lbsCF: 0, lbsCombCola: 0,
+                                lbsTierra: 0, lbsChoclo: 0, lbsMangle: 0, lbsGallinaza: 0,
+                                lotesComb: 0, lotesTotal: 0
+                            };
+                        }
+                        let t = trendMap[d.Fecha_ISO];
+                        t.lotesTotal++;
+                        t.lbsTotal += lbsLote;
+                        t.lbsCombCola += l_combCola;
+                        if (d.Comb_Entero_Total > 0 || d.Comb_Cola > 0) t.lotesComb++;
+
+                        if (totalSabEntero > 0) {
+                            t.lbsEntero    += lbsLote;
+                            t.lbsCombEnt   += l_combEnt;
+                            t.lbsCML       += l_cml;
+                            t.lbsCL        += l_cl;
+                            t.lbsCF        += l_cf;
+                            t.lbsTierra    += l_tierra;
+                            t.lbsChoclo    += l_choclo;
+                            t.lbsMangle    += l_mangle;
+                            t.lbsGallinaza += l_gallinaza;
+                        }
                     }
                 }
             });
@@ -2111,38 +2383,42 @@
                 }
             });
 
-            let rankSabores = Object.values(provSabores).map(p => {
-                let pEnt = p.lbsEntero > 0 ? p.lbsEntero : (p.lbsTotal || 1);
-                let pTot = p.lbsTotal > 0 ? p.lbsTotal : 1;
-                let hasEntero = p.lbsEntero > 0;
+            let rankSabores = Object.values(provSabores)
+                .filter(p => p.lbsTotal > 0 || p.lbsEntero > 0)
+                .map(p => {
+                    let pEnt = p.lbsEntero > 0 ? p.lbsEntero : (p.lbsTotal || 1);
+                    let pTot = p.lbsTotal > 0 ? p.lbsTotal : 1;
+                    let hasEntero = p.lbsEntero > 0;
 
-                let lbsCombUnificado = p.lbsCombEnt + p.lbsCombCola;
-                let pctCombUnificado = (lbsCombUnificado / pTot) * 100;
+                    let lbsCombUnificado = p.lbsCombEnt + p.lbsCombCola;
+                    let pctCombUnificado = (lbsCombUnificado / pTot) * 100;
+                    let pctFresco = p.lbsMeta > 0 ? (p.frescoSuma / p.lbsMeta) : null;
 
-                return {
-                    nombre: p.nombre,
-                    lotes: p.lotes,
-                    lbsTotal: p.lbsTotal,
-                    lotesComb: p.lotesComb,
-                    hasEntero: hasEntero,
-                    pctCaract: hasEntero ? (p.lbsCaract / pEnt) * 100 : 0,
-                    pctCombEnt: hasEntero ? (p.lbsCombEnt / pEnt) * 100 : 0,
-                    lbsCombEnt: p.lbsCombEnt,
-                    lbsCombUnificado: lbsCombUnificado,
-                    pctCombUnificado: pctCombUnificado,
-                    pctCML: hasEntero ? (p.lbsCML / pEnt) * 100 : 0,
-                    pctCL: hasEntero ? (p.lbsCL / pEnt) * 100 : 0,
-                    pctCF: hasEntero ? (p.lbsCF / pEnt) * 100 : 0,
-                    pctCombCola: (p.lbsCombCola / pTot) * 100,
-                    pctTierra: hasEntero ? (p.lbsTierra / pEnt) * 100 : 0,
-                    pctChoclo: hasEntero ? (p.lbsChoclo / pEnt) * 100 : 0,
-                    pctOtrosMG: hasEntero ? (p.lbsOtrosMG / pEnt) * 100 : 0
-                };
-            }).sort((a, b) => {
-                if (Math.abs(a.pctCombUnificado - b.pctCombUnificado) > 0.01) return a.pctCombUnificado - b.pctCombUnificado;
-                if (a.hasEntero !== b.hasEntero) return b.hasEntero - a.hasEntero;
-                return b.pctCaract - a.pctCaract;
-            });
+                    return {
+                        nombre: p.nombre,
+                        lotes: p.lotes,
+                        lbsTotal: p.lbsTotal,
+                        lotesComb: p.lotesComb,
+                        hasEntero: hasEntero,
+                        pctFresco: pctFresco,
+                        pctCaract: hasEntero ? (p.lbsCaract / pEnt) * 100 : 0,
+                        pctCombEnt: hasEntero ? (p.lbsCombEnt / pEnt) * 100 : 0,
+                        lbsCombEnt: p.lbsCombEnt,
+                        lbsCombUnificado: lbsCombUnificado,
+                        pctCombUnificado: pctCombUnificado,
+                        pctCML: hasEntero ? (p.lbsCML / pEnt) * 100 : 0,
+                        pctCL: hasEntero ? (p.lbsCL / pEnt) * 100 : 0,
+                        pctCF: hasEntero ? (p.lbsCF / pEnt) * 100 : 0,
+                        pctCombCola: (p.lbsCombCola / pTot) * 100,
+                        pctTierra: hasEntero ? (p.lbsTierra / pEnt) * 100 : 0,
+                        pctChoclo: hasEntero ? (p.lbsChoclo / pEnt) * 100 : 0,
+                        pctOtrosMG: hasEntero ? (p.lbsOtrosMG / pEnt) * 100 : 0
+                    };
+                }).sort((a, b) => {
+                    if (Math.abs(a.pctCombUnificado - b.pctCombUnificado) > 0.01) return a.pctCombUnificado - b.pctCombUnificado;
+                    if (a.hasEntero !== b.hasEntero) return b.hasEntero - a.hasEntero;
+                    return b.pctCaract - a.pctCaract;
+                });
 
             let topComb = [...rankSabores]
                 .filter(r => r.lbsCombUnificado > 0)
@@ -2347,6 +2623,7 @@
                     <td>${r.lotes}</td>
                     <td class="font-mono text-slate-600">${r.lbsTotal.toLocaleString('en-US',{maximumFractionDigits:0})} lb</td>
                     <td class="font-bold ${r.lotesComb > 0 ? 'text-rose-600' : 'text-slate-400'}">${r.lotesComb}</td>
+                    <td class="font-bold text-teal-700 bg-teal-50/40">${r.pctFresco !== null ? r.pctFresco.toFixed(1) + '%' : '-'}</td>
                     <td class="font-bold text-emerald-700 bg-emerald-50/40">${r.hasEntero ? r.pctCaract.toFixed(1) + '%' : 'N/A'}</td>
                     <td class="font-black ${r.pctCombEnt > 0 ? 'text-indigo-800 bg-indigo-100/70' : 'text-slate-400'}">${r.pctCombEnt.toFixed(2)}%</td>
                     <td class="${r.pctCML > 0 ? 'text-indigo-700 font-bold' : 'text-slate-400'}">${r.pctCML.toFixed(2)}%</td>
