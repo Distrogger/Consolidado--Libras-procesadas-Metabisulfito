@@ -338,7 +338,7 @@
                     </div>
                 </div>
                 <div class="text-xs font-semibold text-teal-800 bg-teal-50 px-3 py-1.5 rounded-md border border-teal-200" id="recep-cruce-summary">
-                    Lotes cruzados con Recepción FIFO y Calidad: 0
+                    Lotes exclusivos de INFROMACION RECEPCION.csv: 0
                 </div>
             </div>
 
@@ -402,14 +402,14 @@
                 <div class="relative h-80 w-full"><canvas id="chartScatterFlacidez"></canvas></div>
             </div>
 
-            <!-- NUEVA TABLA: MONITOREO RECEPCIÓN FIFO Y DEFECTOS POR LOTE -->
+            <!-- TABLA: MONITOREO RECEPCIÓN FIFO Y DEFECTOS POR LOTE -->
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden" id="panel-tabla-recep">
                 <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/70">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900 uppercase flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-blue-600"></i> Monitoreo Recepción FIFO y Defectos por Lote
                         </h2>
-                        <p class="text-xs text-slate-500">Trazabilidad por lote: llegada Convoy 1, inicio proceso / desvíos AG, balance de libras y perfil porcentual de defectos</p>
+                        <p class="text-xs text-slate-500">Fuente exclusiva: INFROMACION RECEPCION.csv (cruce de defectos solo para lotes existentes en recepción)</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         <div class="relative flex-1 md:w-72">
@@ -472,7 +472,15 @@
             renderDashboard(); 
         }
 
-        let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], recepcion: [], consolidado: [], lotesRecepcionSet: new Set() };
+        let db = { 
+            liquidaciones: [], 
+            sabores: [], 
+            metabisulfito: [], 
+            branquias: [], 
+            recepcion: [], 
+            consolidado: [], 
+            soloRecepcion: [] // Arreglo 100% exclusivo para la Pestaña 5
+        };
         let charts = {};
         let selectedScatterLote = null;
 
@@ -498,23 +506,18 @@
             return `${hh}:${mm}`;
         }
 
-        // Validación estricta de año operativo (evita 1899 y años irreales de Excel/MM-DD-YYYY)
         function isValidOperationalYear(year) {
             return year >= 2024 && year <= 2027;
         }
 
-        // Parseo robusto: soporta Serial Excel, ISO YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY (EE.UU.) y celdas concatenadas
         function extractDatesAndTimes(fechaRaw, horaRaw, preferUSFormat = false) {
             let dates = [];
             let times = [];
 
             if (fechaRaw !== undefined && fechaRaw !== null && fechaRaw.toString().trim() !== '') {
                 let fStr = fechaRaw.toString().replace(/["']/g, '').trim();
-
-                // Ignorar valores nulos o "0" que Excel convierte a 1899-12-30
                 if (fStr === '0' || fStr === '0.0') return { dates: [], times: [] };
 
-                // Caso serial numérico de Excel (ej. 46351 -> 2026)
                 if (!isNaN(fStr)) {
                     let num = Number(fStr);
                     if (num >= 44000 && num <= 47500) {
@@ -537,7 +540,6 @@
                         }
                     }
                 } else {
-                    // 1. Formato ISO YYYY-MM-DD o YYYY/MM/DD
                     let matchesYMD = fStr.match(/\b(202[4-7])[\/\-](\d{1,2})[\/\-](\d{1,2})\b/g);
                     if (matchesYMD) {
                         matchesYMD.forEach(m => {
@@ -552,7 +554,6 @@
                             }
                         });
                     } else {
-                        // 2. Formato DD/MM/YYYY o MM/DD/YYYY (incluso concatenados como 26/11/202626/11/2026)
                         let matchesSlash = fStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](202[4-7]|\d{2})/g);
                         if (matchesSlash) {
                             matchesSlash.forEach(m => {
@@ -567,19 +568,15 @@
 
                                 let dd, mm;
                                 if (part2 > 12 && part1 <= 12) {
-                                    // Claramente formato EE.UU. MM/DD/YYYY (ej. 10/26/2026)
                                     mm = part1 - 1;
                                     dd = part2;
                                 } else if (part1 > 12 && part2 <= 12) {
-                                    // Claramente formato Latam DD/MM/YYYY (ej. 26/11/2026)
                                     dd = part1;
                                     mm = part2 - 1;
                                 } else if (preferUSFormat) {
-                                    // Ambiguo (ej. 11/05/2026) en archivo exportado en formato US
                                     mm = part1 - 1;
                                     dd = part2;
                                 } else {
-                                    // Ambiguo en formato Latam DD/MM/YYYY
                                     dd = part1;
                                     mm = part2 - 1;
                                 }
@@ -592,7 +589,6 @@
                         }
                     }
 
-                    // Extraer horas incluidas en la misma cadena (ej. "26/11/2026 5:10:28")
                     let inlineTimes = fStr.match(/\d{1,2}:\d{2}(?::\d{2})?/g);
                     if (inlineTimes && times.length === 0) {
                         inlineTimes.forEach(t => {
@@ -656,7 +652,6 @@
             return { iso: "", display: "-", dateObj: null };
         }
 
-        // Detecta si una columna de fechas en un CSV usa formato estadounidense MM/DD/YYYY (ej. Sabor_Desglosado_Validado)
         function detectUSDateFormat(rows, keys) {
             let usEvidence = 0;
             let latamEvidence = 0;
@@ -674,7 +669,6 @@
             return usEvidence > latamEvidence;
         }
 
-        // Validación cronológica controlada para cruce de medianoche sin desbordamientos irreales
         function alignProcessChronology(dtProcesoRaw, dtReferencia) {
             if (!dtProcesoRaw || !dtReferencia) return dtProcesoRaw;
             let dt = new Date(dtProcesoRaw.getTime());
@@ -690,7 +684,6 @@
             return dt;
         }
 
-        // Cálculo de regresión lineal (y = m*x + b)
         function calcLinearTrend(points, maxX) {
             if (!points || points.length < 2) return {};
             let n = points.length;
@@ -732,7 +725,6 @@
             return undefined;
         }
 
-        // Homologación unificada de nombres de Camaroneras y Proveedores para TODAS las pestañas
         function normalizeCamaroneraName(name) {
             if (!name) return "Desconocida";
             let clean = name.replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
@@ -843,7 +835,7 @@
                     let loadedThis = false;
                     for (let p of f.paths) {
                         try {
-                            let res = await fetch(p);
+                            let res = await fetch(p + '?v=' + Date.now());
                             if (res.ok) {
                                 let text = await res.text();
                                 let parsed = Papa.parse(text, { header: true, delimiter: "", dynamicTyping: false, skipEmptyLines: true });
@@ -887,7 +879,6 @@
             initProcesamiento();
         }
 
-        // Filtro por defecto al último mes en curso para optimizar velocidad de renderizado
         function setDefaultMonthFilter(triggerRender = false) {
             let validDates = db.consolidado
                 .map(d => d.Fecha_ISO)
@@ -895,8 +886,8 @@
                 .sort();
 
             if (validDates.length > 0) {
-                let latestIso = validDates[validDates.length - 1]; // ej. "2026-11-26"
-                let yearMonth = latestIso.substring(0, 7);        // ej. "2026-11"
+                let latestIso = validDates[validDates.length - 1];
+                let yearMonth = latestIso.substring(0, 7);
                 let parts = yearMonth.split('-');
                 let y = parseInt(parts[0], 10);
                 let m = parseInt(parts[1], 10);
@@ -915,14 +906,11 @@
                 
                 let lotesMap = new Map();
                 let camaronerasSet = new Set();
-                db.lotesRecepcionSet = new Set();
 
                 const createEmptyLote = (lote) => ({
                     Lote: lote,
                     Fecha_ISO: "",
                     Fecha_Display: "-",
-                    Fecha_Recepcion_ISO: "",
-                    Fecha_Recepcion_Display: "-",
                     Tipo_MP: "",
                     Camaronera_Original_Omi: "",
                     Piscina_Omi: "",
@@ -946,7 +934,6 @@
                     Mangle_Total: 0,
                     Otros_Sabores: 0,
                     BOML: 0, BOL: 0, BOF: 0,
-                    // Calidad Detallada Porcentual (Metabisulfito_Validado)
                     Has_Meta: false,
                     Lbs_Muestreadas_Meta: 0,
                     Perc_Fresco: 0,
@@ -957,30 +944,10 @@
                     Perc_Melanosis: 0,
                     Mancha_Leve: 0,
                     Mancha_Fuerte: 0,
-                    Bact_Leve: 0,
-                    // Tiempos FIFO por Convoy (INFROMACION RECEPCION)
-                    Has_Recepcion: false,
-                    Enviado_AG: false,
-                    Cosecha: "-",
-                    Turno_Llegada: "",
-                    Dt_Primer_Convoy: null,
-                    Dt_Primer_Proceso: null,
-                    Hora_Llegada_Display: "-",
-                    Hora_Proceso_Display: "-",
-                    Lbs_Recibidas_Recep: 0,
-                    Lbs_Procesadas_Recep: 0,
-                    Lbs_Enviadas_Descabezar: 0,
-                    Lbs_Pendientes_Patio: 0,
-                    Lbs_Dia: 0,
-                    Lbs_Noche: 0,
-                    Es_Fraccionado: false,
-                    Convoys_Count: 0,
-                    Espera_Primer_Ingreso_Hrs: null,
-                    Espera_Ponderada_Hrs: null,
-                    Espera_Activa_Patio_Hrs: null
+                    Bact_Leve: 0
                 });
 
-                // 1. OMIPROD (Liquidación)
+                // 1. OMIPROD (Pestañas 1 a 4)
                 db.liquidaciones.forEach(row => {
                     let loteRaw = getVal(row, ['Lote', 'lote']);
                     if (loteRaw === undefined) return;
@@ -1013,7 +980,7 @@
                     else if(claseStr === 'D') l.Clases.D += librasFilas;
                 });
 
-                // 2. METABISULFITO_VALIDADO (Lectura estricta de columnas porcentuales '(%)')
+                // 2. METABISULFITO_VALIDADO (Índice maestro de Calidad Física %)
                 let isMetaUS = detectUSDateFormat(db.metabisulfito, ['Fecha de llegada', 'Fecha de lleg']);
                 let metaTemp = {};
                 db.metabisulfito.forEach(row => {
@@ -1033,7 +1000,6 @@
                     let lbs = parseNum(getVal(row, ['Libras recibidas', 'Libras recibida']));
                     if (lbs <= 0) lbs = 1;
 
-                    // Extraer estrictamente las columnas porcentuales '(%)', nunca las de conteo de piezas
                     let pctFresco = parseNum(getVal(row, ['E. fresco y sano (%)']));
                     let pctMeta   = parseNum(getVal(row, ['Porcentaje de metabisulfito', 'Porcentaje de metabisulfito (%)']));
                     let pctFlac   = parseNum(getVal(row, ['E. flacido (%)', 'E. flácido (%)']));
@@ -1056,7 +1022,7 @@
                     metaTemp[lote].bactL += pctBactL * lbs;
                 });
 
-                // 3. SABORES (Detección automática de formato de fecha MM/DD/YYYY vs DD/MM/YYYY)
+                // 3. SABORES
                 let isSaboresUS = detectUSDateFormat(db.sabores, ['Fecha llegada a planta', 'Fecha llegada']);
                 db.sabores.forEach(row => {
                     let lote = (getVal(row, ['Lote']) || '').toString().trim();
@@ -1135,198 +1101,7 @@
                     }
                 });
 
-                // 5. INFROMACION RECEPCION — RECONSTRUCCIÓN FIFO Y MANEJO DE DESVÍOS A PLANTA AG
-                if (db.recepcion && db.recepcion.length > 0) {
-                    let maxFileTimestamp = 0;
-                    db.recepcion.forEach(r => {
-                        let dtF = buildConsolidatedTimestamp(getVal(r, ['FECHA']), getVal(r, ['HORA LLEGA']), false);
-                        if (dtF && dtF.getTime() > maxFileTimestamp) maxFileTimestamp = dtF.getTime();
-                        for (let i = 1; i <= 6; i++) {
-                            let dtC = buildConsolidatedTimestamp(getVal(r, [`HR LLEG ${i}`]), null, false);
-                            if (dtC && dtC.getTime() > maxFileTimestamp) maxFileTimestamp = dtC.getTime();
-                        }
-                    });
-
-                    db.recepcion.forEach(row => {
-                        let lote = (getVal(row, ['LOTE', 'Lote']) || '').toString().trim();
-                        if (!lote) return;
-
-                        let statusPesca = (getVal(row, ['STATUS PESCA']) || '').toString().toUpperCase().trim();
-                        let estatusEmpaque = (getVal(row, ['ESTATUS DE EMPAQUE']) || '').toString().toUpperCase().trim();
-                        let observacionRec = (getVal(row, ['OBSERVACION']) || '').toString().toUpperCase().trim();
-                        let totalRecibido = parseNum(getVal(row, ['TOTAL RECIBIDO']));
-                        let lbsEnvDescab = parseNum(getVal(row, ['LBS ENVIADAS A DESCABEZAR']));
-                        let fechaHoraDescabRaw = getVal(row, ['FECHA Y HORA DESCABEZADA']);
-                        let lbsPatioCol = parseNum(getVal(row, ['LBS EN PATIO']));
-
-                        if (statusPesca === 'CANCELADO' && totalRecibido === 0) return;
-
-                        db.lotesRecepcionSet.add(lote);
-
-                        if (!lotesMap.has(lote)) {
-                            let newL = createEmptyLote(lote);
-                            newL.Libras_Recibidas = totalRecibido;
-                            lotesMap.set(lote, newL);
-                        }
-
-                        let l = lotesMap.get(lote);
-                        let turnoRaw = (getVal(row, ['TURNO']) || '').toString().toUpperCase().trim();
-                        let fechaLlegRaw = getVal(row, ['FECHA']);
-                        let horaLlegRaw = getVal(row, ['HORA LLEGA']);
-                        let provRec = (getVal(row, ['PROVEEDOR']) || '').trim();
-                        let piscRec = (getVal(row, ['PISC']) || '').trim();
-                        let cosechaRec = (getVal(row, ['COSECHA']) || '-').toString().trim() || '-';
-
-                        if (l.Camaronera_Oficial === "Desconocida" && (provRec || piscRec)) {
-                            l.Camaronera_Oficial = resolveCamaronera(provRec, piscRec, l.Camaronera_Original_Omi, l.Piscina_Omi);
-                            if (l.Camaronera_Oficial !== "Desconocida") camaronerasSet.add(l.Camaronera_Oficial);
-                        }
-                        if (!l.Piscina && piscRec) l.Piscina = piscRec;
-
-                        // Reconstrucción de Entradas (Convoys 1..6)
-                        let convoys = [];
-                        for (let i = 1; i <= 6; i++) {
-                            let hrConvRaw = getVal(row, [`HR LLEG ${i}`, `HR LLEG${i}`]);
-                            let lbsConv = parseNum(getVal(row, [`CONVOY ${i}`, `CONVOY${i}`]));
-                            let dtConv = buildConsolidatedTimestamp(hrConvRaw, null, false);
-                            if (dtConv && lbsConv > 0) {
-                                convoys.push({
-                                    id: i,
-                                    dtLlegada: dtConv,
-                                    lbsIniciales: lbsConv,
-                                    lbsDisponibles: lbsConv
-                                });
-                            }
-                        }
-
-                        let dtGeneral = buildConsolidatedTimestamp(fechaLlegRaw, horaLlegRaw, false);
-                        if (convoys.length === 0 && dtGeneral) {
-                            let lbsFallback = totalRecibido > 0 ? totalRecibido : (l.Libras_Recibidas || l.Libras_Procesadas || 0);
-                            if (lbsFallback > 0) {
-                                convoys.push({
-                                    id: 0,
-                                    dtLlegada: dtGeneral,
-                                    lbsIniciales: lbsFallback,
-                                    lbsDisponibles: lbsFallback
-                                });
-                            }
-                        }
-
-                        convoys.sort((a, b) => a.dtLlegada.getTime() - b.dtLlegada.getTime());
-
-                        if (convoys.length > 0) {
-                            let dtFirstConv = convoys[0].dtLlegada;
-                            let yyyy = dtFirstConv.getFullYear();
-                            let mm = String(dtFirstConv.getMonth() + 1).padStart(2, '0');
-                            let dd = String(dtFirstConv.getDate()).padStart(2, '0');
-
-                            l.Fecha_Recepcion_ISO = `${yyyy}-${mm}-${dd}`;
-                            l.Fecha_Recepcion_Display = `${dd}/${mm}/${yyyy}`;
-
-                            if (!l.Fecha_ISO) {
-                                l.Fecha_ISO = l.Fecha_Recepcion_ISO;
-                                l.Fecha_Display = l.Fecha_Recepcion_Display;
-                            }
-
-                            let lbsDia = parseNum(getVal(row, ['LBS DIA']));
-                            let dtProcDiaRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO']), getVal(row, ['HORA PROCESO']), false);
-                            let dtProcDia = (lbsDia > 0) ? alignProcessChronology(dtProcDiaRaw, dtFirstConv) : null;
-
-                            let lbsNoche = parseNum(getVal(row, ['LBS NOCHE']));
-                            let dtProcNocheRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO2']), getVal(row, ['HORA PROCESO2']), false);
-                            let dtProcNoche = (lbsNoche > 0) ? alignProcessChronology(dtProcNocheRaw, dtFirstConv) : null;
-
-                            // Detectar si el lote fue enviado a planta AG / descabezado sin procesarse en Brisas
-                            let dtDesvioAGRaw = buildConsolidatedTimestamp(fechaHoraDescabRaw, null, false);
-                            let dtDesvioAG = dtDesvioAGRaw ? alignProcessChronology(dtDesvioAGRaw, dtFirstConv) : null;
-                            let esEnvioAG = (lbsDia === 0 && lbsNoche === 0) && (
-                                lbsEnvDescab > 0 ||
-                                observacionRec.includes('ENVIA AG') ||
-                                observacionRec.includes('PLANTA AG') ||
-                                observacionRec.includes('DESCABEZ') ||
-                                dtDesvioAG !== null
-                            );
-
-                            let procesos = [];
-                            if (dtProcDia && lbsDia > 0) procesos.push({ turno: 'DIA', dtProceso: dtProcDia, lbsProcesadas: lbsDia });
-                            if (dtProcNoche && lbsNoche > 0) procesos.push({ turno: 'NOCHE', dtProceso: dtProcNoche, lbsProcesadas: lbsNoche });
-                            procesos.sort((a, b) => a.dtProceso.getTime() - b.dtProceso.getTime());
-
-                            let sumPesoHoras = 0;
-                            let sumLbsAsignadas = 0;
-
-                            if (!esEnvioAG) {
-                                procesos.forEach(proc => {
-                                    let lbsPorConsumir = proc.lbsProcesadas;
-                                    for (let c of convoys) {
-                                        if (lbsPorConsumir <= 0) break;
-                                        if (c.lbsDisponibles <= 0) continue;
-
-                                        let tomadas = Math.min(c.lbsDisponibles, lbsPorConsumir);
-                                        c.lbsDisponibles -= tomadas;
-                                        lbsPorConsumir -= tomadas;
-
-                                        let hrsEspera = Math.max(0, (proc.dtProceso.getTime() - c.dtLlegada.getTime()) / 3600000);
-                                        sumPesoHoras += hrsEspera * tomadas;
-                                        sumLbsAsignadas += tomadas;
-                                    }
-                                });
-                            }
-
-                            let lbsRecTot = totalRecibido > 0 ? totalRecibido : convoys.reduce((acc, c) => acc + c.lbsIniciales, 0);
-                            let lbsProcTot = lbsDia + lbsNoche;
-                            let lbsPendientes = (esEnvioAG || estatusEmpaque === 'PROCESADO') ? 0 : (lbsPatioCol > 0 ? lbsPatioCol : Math.max(0, convoys.reduce((acc, c) => acc + c.lbsDisponibles, 0)));
-
-                            l.Has_Recepcion = true;
-                            l.Enviado_AG = esEnvioAG;
-                            l.Cosecha = esEnvioAG ? 'Enviado a AG' : cosechaRec;
-                            l.Turno_Llegada = turnoRaw;
-                            l.Convoys_Count = convoys.length;
-                            l.Dt_Primer_Convoy = dtFirstConv;
-                            l.Hora_Llegada_Display = formatTimeHHMM(dtFirstConv);
-                            l.Lbs_Recibidas_Recep = lbsRecTot;
-                            l.Lbs_Procesadas_Recep = lbsProcTot;
-                            l.Lbs_Enviadas_Descabezar = lbsEnvDescab;
-                            l.Lbs_Pendientes_Patio = lbsPendientes;
-                            l.Lbs_Dia = lbsDia;
-                            l.Lbs_Noche = lbsNoche;
-                            l.Es_Fraccionado = (lbsDia > 0 && lbsNoche > 0);
-
-                            if (esEnvioAG) {
-                                // Excluir del cálculo de espera de proceso en Brisas para no alterar las gráficas
-                                l.Hora_Proceso_Display = dtDesvioAG ? `${formatTimeHHMM(dtDesvioAG)} (Enviado a AG)` : 'Enviado a AG';
-                                l.Espera_Ponderada_Hrs = null;
-                                l.Espera_Primer_Ingreso_Hrs = null;
-                                l.Espera_Activa_Patio_Hrs = null;
-                            } else {
-                                if (procesos.length > 0) {
-                                    l.Dt_Primer_Proceso = procesos[0].dtProceso;
-                                    l.Hora_Proceso_Display = procesos.map(p => `${formatTimeHHMM(p.dtProceso)} (${p.turno === 'DIA' ? 'D' : 'N'})`).join(' / ');
-                                    l.Espera_Primer_Ingreso_Hrs = Math.max(0, (procesos[0].dtProceso.getTime() - dtFirstConv.getTime()) / 3600000);
-                                }
-
-                                if (sumLbsAsignadas > 0) {
-                                    l.Espera_Ponderada_Hrs = sumPesoHoras / sumLbsAsignadas;
-                                }
-
-                                // Solo calcular espera activa si realmente quedan libras pendientes en patio y el lote no está cerrado
-                                let convoyPendienteMasAntiguo = convoys.find(c => c.lbsDisponibles > 0);
-                                if (convoyPendienteMasAntiguo && lbsPendientes > 0 && estatusEmpaque !== 'PROCESADO') {
-                                    let nowMs = Date.now();
-                                    let refCorteMs = (maxFileTimestamp > 0 && (nowMs - maxFileTimestamp) > 36 * 3600000) ? maxFileTimestamp : nowMs;
-                                    let hrsActiva = Math.max(0, (refCorteMs - convoyPendienteMasAntiguo.dtLlegada.getTime()) / 3600000);
-                                    l.Espera_Activa_Patio_Hrs = hrsActiva;
-
-                                    if (l.Espera_Ponderada_Hrs === null && hrsActiva <= 72) {
-                                        l.Espera_Ponderada_Hrs = hrsActiva;
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Consolidación final por Lote y homologación universal de Camaroneras
+                // Consolidación final para Pestañas 1 a 4
                 Array.from(lotesMap.values()).forEach(l => {
                     let lote = l.Lote;
                     let metaCam = metaTemp[lote] ? metaTemp[lote].camaronera : null;
@@ -1382,6 +1157,208 @@
                 });
 
                 db.consolidado = Array.from(lotesMap.values());
+
+                // =========================================================================
+                // 5. PROCESAMIENTO AISLADO EXCLUSIVO PARA PESTAÑA 5 (INFROMACION RECEPCION)
+                // =========================================================================
+                let recepMap = new Map();
+                if (db.recepcion && db.recepcion.length > 0) {
+                    let maxFileTimestamp = 0;
+                    db.recepcion.forEach(r => {
+                        let dtF = buildConsolidatedTimestamp(getVal(r, ['FECHA']), getVal(r, ['HORA LLEGA']), false);
+                        if (dtF && dtF.getTime() > maxFileTimestamp) maxFileTimestamp = dtF.getTime();
+                        for (let i = 1; i <= 6; i++) {
+                            let dtC = buildConsolidatedTimestamp(getVal(r, [`HR LLEG ${i}`]), null, false);
+                            if (dtC && dtC.getTime() > maxFileTimestamp) maxFileTimestamp = dtC.getTime();
+                        }
+                    });
+
+                    db.recepcion.forEach(row => {
+                        let lote = (getVal(row, ['LOTE', 'Lote']) || '').toString().trim();
+                        if (!lote) return;
+
+                        let statusPesca = (getVal(row, ['STATUS PESCA']) || '').toString().toUpperCase().trim();
+                        let estatusEmpaque = (getVal(row, ['ESTATUS DE EMPAQUE']) || '').toString().toUpperCase().trim();
+                        let observacionRec = (getVal(row, ['OBSERVACION']) || '').toString().toUpperCase().trim();
+                        let totalRecibido = parseNum(getVal(row, ['TOTAL RECIBIDO']));
+                        let lbsEnvDescab = parseNum(getVal(row, ['LBS ENVIADAS A DESCABEZAR']));
+                        let fechaHoraDescabRaw = getVal(row, ['FECHA Y HORA DESCABEZADA']);
+                        let lbsPatioCol = parseNum(getVal(row, ['LBS EN PATIO']));
+
+                        if (statusPesca === 'CANCELADO' && totalRecibido === 0) return;
+
+                        let turnoRaw = (getVal(row, ['TURNO']) || '').toString().toUpperCase().trim();
+                        let fechaLlegRaw = getVal(row, ['FECHA']);
+                        let horaLlegRaw = getVal(row, ['HORA LLEGA']);
+                        let provRec = (getVal(row, ['PROVEEDOR']) || '').trim();
+                        let piscRec = (getVal(row, ['PISC']) || '').trim();
+                        let cosechaRec = (getVal(row, ['COSECHA']) || '-').toString().trim() || '-';
+
+                        let camOficial = resolveCamaronera(provRec, piscRec, null, null);
+                        if (camOficial !== "Desconocida") camaronerasSet.add(camOficial);
+
+                        // Reconstrucción de Entradas (Convoys 1..6)
+                        let convoys = [];
+                        for (let i = 1; i <= 6; i++) {
+                            let hrConvRaw = getVal(row, [`HR LLEG ${i}`, `HR LLEG${i}`]);
+                            let lbsConv = parseNum(getVal(row, [`CONVOY ${i}`, `CONVOY${i}`]));
+                            let dtConv = buildConsolidatedTimestamp(hrConvRaw, null, false);
+                            if (dtConv && lbsConv > 0) {
+                                convoys.push({
+                                    id: i,
+                                    dtLlegada: dtConv,
+                                    lbsIniciales: lbsConv,
+                                    lbsDisponibles: lbsConv
+                                });
+                            }
+                        }
+
+                        let dtGeneral = buildConsolidatedTimestamp(fechaLlegRaw, horaLlegRaw, false);
+                        if (convoys.length === 0 && dtGeneral && totalRecibido > 0) {
+                            convoys.push({
+                                id: 0,
+                                dtLlegada: dtGeneral,
+                                lbsIniciales: totalRecibido,
+                                lbsDisponibles: totalRecibido
+                            });
+                        }
+
+                        convoys.sort((a, b) => a.dtLlegada.getTime() - b.dtLlegada.getTime());
+
+                        let fechaIso = "";
+                        let fechaDisplay = "-";
+                        let dtFirstConv = null;
+
+                        if (convoys.length > 0) {
+                            dtFirstConv = convoys[0].dtLlegada;
+                        } else if (dtGeneral) {
+                            dtFirstConv = dtGeneral;
+                        }
+
+                        if (dtFirstConv) {
+                            let yyyy = dtFirstConv.getFullYear();
+                            let mm = String(dtFirstConv.getMonth() + 1).padStart(2, '0');
+                            let dd = String(dtFirstConv.getDate()).padStart(2, '0');
+                            fechaIso = `${yyyy}-${mm}-${dd}`;
+                            fechaDisplay = `${dd}/${mm}/${yyyy}`;
+                        }
+
+                        let lbsDia = parseNum(getVal(row, ['LBS DIA']));
+                        let dtProcDiaRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO']), getVal(row, ['HORA PROCESO']), false);
+                        let dtProcDia = (lbsDia > 0 && dtFirstConv) ? alignProcessChronology(dtProcDiaRaw, dtFirstConv) : null;
+
+                        let lbsNoche = parseNum(getVal(row, ['LBS NOCHE']));
+                        let dtProcNocheRaw = buildConsolidatedTimestamp(getVal(row, ['FECHA DE PROCESO2']), getVal(row, ['HORA PROCESO2']), false);
+                        let dtProcNoche = (lbsNoche > 0 && dtFirstConv) ? alignProcessChronology(dtProcNocheRaw, dtFirstConv) : null;
+
+                        let dtDesvioAGRaw = buildConsolidatedTimestamp(fechaHoraDescabRaw, null, false);
+                        let dtDesvioAG = (dtDesvioAGRaw && dtFirstConv) ? alignProcessChronology(dtDesvioAGRaw, dtFirstConv) : null;
+                        let esEnvioAG = (lbsDia === 0 && lbsNoche === 0) && (
+                            lbsEnvDescab > 0 ||
+                            observacionRec.includes('ENVIA AG') ||
+                            observacionRec.includes('PLANTA AG') ||
+                            observacionRec.includes('DESCABEZ') ||
+                            dtDesvioAG !== null
+                        );
+
+                        let procesos = [];
+                        if (dtProcDia && lbsDia > 0) procesos.push({ turno: 'DIA', dtProceso: dtProcDia, lbsProcesadas: lbsDia });
+                        if (dtProcNoche && lbsNoche > 0) procesos.push({ turno: 'NOCHE', dtProceso: dtProcNoche, lbsProcesadas: lbsNoche });
+                        procesos.sort((a, b) => a.dtProceso.getTime() - b.dtProceso.getTime());
+
+                        let sumPesoHoras = 0;
+                        let sumLbsAsignadas = 0;
+
+                        if (!esEnvioAG && convoys.length > 0) {
+                            procesos.forEach(proc => {
+                                let lbsPorConsumir = proc.lbsProcesadas;
+                                for (let c of convoys) {
+                                    if (lbsPorConsumir <= 0) break;
+                                    if (c.lbsDisponibles <= 0) continue;
+
+                                    let tomadas = Math.min(c.lbsDisponibles, lbsPorConsumir);
+                                    c.lbsDisponibles -= tomadas;
+                                    lbsPorConsumir -= tomadas;
+
+                                    let hrsEspera = Math.max(0, (proc.dtProceso.getTime() - c.dtLlegada.getTime()) / 3600000);
+                                    sumPesoHoras += hrsEspera * tomadas;
+                                    sumLbsAsignadas += tomadas;
+                                }
+                            });
+                        }
+
+                        let lbsRecTot = totalRecibido > 0 ? totalRecibido : convoys.reduce((acc, c) => acc + c.lbsIniciales, 0);
+                        let lbsProcTot = lbsDia + lbsNoche;
+                        let lbsPendientes = (esEnvioAG || estatusEmpaque === 'PROCESADO') ? 0 : (lbsPatioCol > 0 ? lbsPatioCol : Math.max(0, convoys.reduce((acc, c) => acc + c.lbsDisponibles, 0)));
+
+                        let horaProcDisplay = "-";
+                        let esperaPrimerHrs = null;
+                        let esperaPondHrs = null;
+
+                        if (esEnvioAG) {
+                            horaProcDisplay = dtDesvioAG ? `${formatTimeHHMM(dtDesvioAG)} (Enviado a AG)` : 'Enviado a AG';
+                        } else {
+                            if (procesos.length > 0) {
+                                horaProcDisplay = procesos.map(p => `${formatTimeHHMM(p.dtProceso)} (${p.turno === 'DIA' ? 'D' : 'N'})`).join(' / ');
+                                if (dtFirstConv) {
+                                    esperaPrimerHrs = Math.max(0, (procesos[0].dtProceso.getTime() - dtFirstConv.getTime()) / 3600000);
+                                }
+                            }
+                            if (sumLbsAsignadas > 0) {
+                                esperaPondHrs = sumPesoHoras / sumLbsAsignadas;
+                            }
+                            let convoyPendienteMasAntiguo = convoys.find(c => c.lbsDisponibles > 0);
+                            if (convoyPendienteMasAntiguo && lbsPendientes > 0 && estatusEmpaque !== 'PROCESADO') {
+                                let nowMs = Date.now();
+                                let refCorteMs = (maxFileTimestamp > 0 && (nowMs - maxFileTimestamp) > 36 * 3600000) ? maxFileTimestamp : nowMs;
+                                let hrsActiva = Math.max(0, (refCorteMs - convoyPendienteMasAntiguo.dtLlegada.getTime()) / 3600000);
+                                if (esperaPondHrs === null && hrsActiva <= 72) {
+                                    esperaPondHrs = hrsActiva;
+                                }
+                            }
+                        }
+
+                        // Cruce de calidad (%) únicamente para lotes que EXISTEN en INFROMACION RECEPCION.csv
+                        let m = metaTemp[lote];
+                        let hasMeta = !!(m && m.totalLbs > 0);
+                        let lOmi = lotesMap.get(lote);
+
+                        let itemRecep = {
+                            Lote: lote,
+                            Camaronera_Oficial: camOficial,
+                            Piscina: piscRec || '-',
+                            Clase_Valida: lOmi ? lOmi.Clase_Valida : '-',
+                            Fecha_ISO: fechaIso,
+                            Fecha_Display: fechaDisplay,
+                            Enviado_AG: esEnvioAG,
+                            Cosecha: esEnvioAG ? 'Enviado a AG' : cosechaRec,
+                            Turno_Llegada: turnoRaw,
+                            Hora_Llegada_Display: dtFirstConv ? formatTimeHHMM(dtFirstConv) : '-',
+                            Hora_Proceso_Display: horaProcDisplay,
+                            Lbs_Recibidas_Recep: lbsRecTot,
+                            Lbs_Procesadas_Recep: lbsProcTot,
+                            Lbs_Enviadas_Descabezar: lbsEnvDescab,
+                            Lbs_Pendientes_Patio: lbsPendientes,
+                            Es_Fraccionado: (lbsDia > 0 && lbsNoche > 0),
+                            Espera_Primer_Ingreso_Hrs: esperaPrimerHrs,
+                            Espera_Ponderada_Hrs: esperaPondHrs,
+                            Has_Meta: hasMeta,
+                            Lbs_Muestreadas_Meta: hasMeta ? m.totalLbs : 0,
+                            Perc_Fresco: hasMeta ? (m.frescoSuma / m.totalLbs) : 0,
+                            Perc_Flacido: hasMeta ? (m.flacidoSuma / m.totalLbs) : 0,
+                            Perc_Cab_Floja: hasMeta ? (m.cabFlojaSuma / m.totalLbs) : 0,
+                            Perc_Cab_Desp: hasMeta ? (m.cabDespSuma / m.totalLbs) : 0,
+                            Perc_Melanosis: hasMeta ? (m.melanosisSuma / m.totalLbs) : 0,
+                            Mancha_Leve: hasMeta ? (m.manchaL / m.totalLbs) : 0,
+                            Mancha_Fuerte: hasMeta ? (m.manchaF / m.totalLbs) : 0,
+                            Bact_Leve: hasMeta ? (m.bactL / m.totalLbs) : 0
+                        };
+
+                        recepMap.set(lote, itemRecep);
+                    });
+                }
+
+                db.soloRecepcion = Array.from(recepMap.values());
                 
                 let camSelect = document.getElementById('filterCamaronera');
                 if (camSelect) {
@@ -1393,7 +1370,6 @@
                     });
                 }
 
-                // Activar por defecto el último mes en curso para optimizar velocidad
                 setDefaultMonthFilter(false);
                 renderDashboard();
                 
@@ -1453,11 +1429,13 @@
                 let periodoTxt = (fDesde || fHasta) ? ` | Período: ${fDesde || 'Inicio'} a ${fHasta || 'Hoy'}` : ' | Histórico Global';
                 document.getElementById('filter-summary').innerText = `Mostrando ${data.length} de ${db.consolidado.length} lotes${periodoTxt}`;
 
+                // Renderizar Pestaña 5 siempre desde db.soloRecepcion (100% independiente)
+                renderTiemposRecepcionTab();
+
                 if(data.length === 0) {
                     document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="20" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
                     document.getElementById('tbody-ranking').innerHTML = '';
                     document.getElementById('tbody-ranking-sabores').innerHTML = '';
-                    renderTiemposRecepcionTab(db.consolidado);
                     return; 
                 }
                 
@@ -1543,7 +1521,7 @@
                     }
                 });
 
-                // --- PESTAÑA 2: MATRIZ ORGANOLÉPTICA (Con columna Fresco y Sano %) ---
+                // --- PESTAÑA 2: MATRIZ ORGANOLÉPTICA ---
                 let cls = { A:{lbs:0}, B:{lbs:0}, C:{lbs:0}, D:{lbs:0} };
                 data.forEach(d => {
                     if(d.Clase_Valida === 'A') cls.A.lbs += d.Libras_Procesadas;
@@ -1632,7 +1610,7 @@
                     </tr>`;
                 }).join('');
 
-                // --- PESTAÑA 3: RANKING GENERAL (Camaroneras validadas, sin filas vacías + % Fresco y Sano) ---
+                // --- PESTAÑA 3: RANKING GENERAL ---
                 let provs = {};
                 data.forEach(d => {
                     let p = d.Camaronera_Oficial;
@@ -1702,9 +1680,6 @@
                 // --- PESTAÑA 4: ANÁLISIS DE SABORES Y COMBUSTIBLE ---
                 renderSaboresTab(data, activePlugins);
 
-                // --- PESTAÑA 5: TIEMPOS DE ESPERA FIFO Y CALIDAD DE RECEPCIÓN ---
-                renderTiemposRecepcionTab(db.consolidado);
-
             } catch(error) {
                 console.error("Error en renderDashboard:", error);
                 document.getElementById('status-indicator').textContent = "Fallo en renderizado: " + error.message;
@@ -1741,7 +1716,7 @@
             if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
 
-        function renderTiemposRecepcionTab(allData) {
+        function renderTiemposRecepcionTab() {
             let filterCam = document.getElementById('filterCamaronera').value;
             let filterClase = document.getElementById('filterClase').value;
             let fDesde = document.getElementById('filterFechaDesde').value;
@@ -1749,18 +1724,15 @@
             let turnoFilter = document.getElementById('filterTurnoRecep') ? document.getElementById('filterTurnoRecep').value : 'ALL';
             let flujoFilter = document.getElementById('filterFlujoRecep') ? document.getElementById('filterFlujoRecep').value : 'ALL';
 
-            let lotesTab5 = allData.filter(d => {
-                // Exigencia estricta: el lote debe existir en INFROMACION RECEPCION.csv
-                if (!d.Has_Recepcion || !db.lotesRecepcionSet.has(d.Lote)) return false;
-
+            // Fuente 100% exclusiva: db.soloRecepcion (extraído únicamente de INFROMACION RECEPCION.csv)
+            let lotesTab5 = db.soloRecepcion.filter(d => {
                 if (filterCam !== 'ALL' && d.Camaronera_Oficial !== filterCam) return false;
                 if (filterClase !== 'ALL' && d.Clase_Valida !== filterClase) return false;
 
-                let fechaRef = d.Fecha_Recepcion_ISO || d.Fecha_ISO;
                 if (fDesde || fHasta) {
-                    if (!fechaRef) return false;
-                    if (fDesde && fechaRef < fDesde) return false;
-                    if (fHasta && fechaRef > fHasta) return false;
+                    if (!d.Fecha_ISO) return false;
+                    if (fDesde && d.Fecha_ISO < fDesde) return false;
+                    if (fHasta && d.Fecha_ISO > fHasta) return false;
                 }
 
                 if (turnoFilter !== 'ALL' && d.Turno_Llegada !== turnoFilter) return false;
@@ -1772,17 +1744,16 @@
             });
 
             let lotesCalidad = lotesTab5.filter(d => d.Has_Meta);
-            // Excluir lotes enviados a AG de las estadísticas y gráficas de espera de proceso en Brisas
-            let lotesConTiempos = lotesTab5.filter(d => d.Has_Recepcion && !d.Enviado_AG && d.Espera_Ponderada_Hrs !== null);
-            let lotesCruzados = lotesTab5.filter(d => d.Has_Meta && d.Has_Recepcion && !d.Enviado_AG && d.Espera_Ponderada_Hrs !== null);
+            let lotesConTiempos = lotesTab5.filter(d => !d.Enviado_AG && d.Espera_Ponderada_Hrs !== null);
+            let lotesCruzados = lotesTab5.filter(d => d.Has_Meta && !d.Enviado_AG && d.Espera_Ponderada_Hrs !== null);
 
             document.getElementById('recep-cruce-summary').innerText = 
-                `Lotes FIFO Brisas: ${lotesConTiempos.length} | Con Calidad (%): ${lotesCalidad.length} | Cruzados: ${lotesCruzados.length}`;
+                `Lotes en INFROMACION RECEPCION.csv: ${lotesTab5.length} | Con Tiempos Brisas: ${lotesConTiempos.length} | Con Calidad (%): ${lotesCruzados.length}`;
 
-            // 1. KPIs globales (usando exclusivamente columnas porcentuales '(%)')
+            // 1. KPIs globales
             let sumLbsCal = 0, sumFresco = 0, sumFlacido = 0, sumCabFloja = 0, sumCabDesp = 0, sumMelanosis = 0;
             lotesCalidad.forEach(d => {
-                let w = d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 1;
+                let w = d.Lbs_Muestreadas_Meta || d.Lbs_Recibidas_Recep || 1;
                 sumLbsCal += w;
                 sumFresco += d.Perc_Fresco * w;
                 sumFlacido += d.Perc_Flacido * w;
@@ -1812,7 +1783,7 @@
             let avgEspPond = sumLbsTiempos > 0 ? (sumEspPond / sumLbsTiempos) : 0;
             let avgEspPrim = countEspPrim > 0 ? (sumEspPrim / countEspPrim) : 0;
 
-            document.getElementById('kpi-esp-ponderada').innerText = lotesConTiempos.length > 0 ? `${avgEspPond.toFixed(1)} h` : "Sin CSV Recep.";
+            document.getElementById('kpi-esp-ponderada').innerText = lotesConTiempos.length > 0 ? `${avgEspPond.toFixed(1)} h` : "Sin datos";
             document.getElementById('kpi-esp-primer').innerText = lotesConTiempos.length > 0 ? `1er Ingreso Convoy 1: ${avgEspPrim.toFixed(1)} h` : "Carga INFROMACION RECEPCION.csv";
 
             document.getElementById('kpi-cal-fresco').innerText = `${pctFresco.toFixed(1)}%`;
@@ -1952,7 +1923,7 @@
                     lote: d.Lote,
                     camaronera: d.Camaronera_Oficial,
                     piscina: d.Piscina || '-',
-                    lbs: d.Lbs_Muestreadas_Meta || d.Libras_Recibidas || 0
+                    lbs: d.Lbs_Muestreadas_Meta || d.Lbs_Recibidas_Recep || 0
                 };
                 ptsFresco.push({ x: hrs, y: +(d.Perc_Fresco.toFixed(2)), ...metaInfo });
                 ptsFlacido.push({ x: hrs, y: +(d.Perc_Flacido.toFixed(2)), ...metaInfo });
@@ -2136,7 +2107,6 @@
                 }
             });
 
-            // Evento Doble Clic en el canvas para quitar el filtro de lote automáticamente
             let scatterCanvas = document.getElementById('chartScatterFlacidez');
             if (scatterCanvas) {
                 scatterCanvas.ondblclick = function() {
@@ -2145,10 +2115,14 @@
             }
 
             // 5. TABLA: Monitoreo Recepción FIFO y Defectos por Lote
+            if (lotesTab5.length === 0) {
+                document.getElementById('tbody-recep-lotes').innerHTML = 
+                    '<tr><td colspan="18" class="text-center py-8 text-slate-500 font-semibold">No hay lotes de INFROMACION RECEPCION.csv para los filtros seleccionados.</td></tr>';
+                return;
+            }
+
             let lotesOrdenados = [...lotesTab5].sort((a, b) => {
-                let fa = a.Fecha_Recepcion_ISO || a.Fecha_ISO;
-                let fb = b.Fecha_Recepcion_ISO || b.Fecha_ISO;
-                if (fa !== fb) return fb.localeCompare(fa);
+                if (a.Fecha_ISO !== b.Fecha_ISO) return b.Fecha_ISO.localeCompare(a.Fecha_ISO);
                 return b.Lote.localeCompare(a.Lote);
             });
 
@@ -2187,9 +2161,9 @@
                        </span>`;
                 }
 
-                let lbsRec = d.Lbs_Recibidas_Recep || d.Libras_Recibidas || d.Lbs_Muestreadas_Meta || 0;
-                let lbsProc = d.Enviado_AG ? (d.Lbs_Enviadas_Descabezar || 0) : (d.Lbs_Procesadas_Recep || d.Libras_Procesadas || 0);
-                let lbsPend = d.Has_Recepcion ? d.Lbs_Pendientes_Patio : Math.max(0, lbsRec - lbsProc);
+                let lbsRec = d.Lbs_Recibidas_Recep || 0;
+                let lbsProc = d.Enviado_AG ? (d.Lbs_Enviadas_Descabezar || 0) : (d.Lbs_Procesadas_Recep || 0);
+                let lbsPend = d.Lbs_Pendientes_Patio || 0;
 
                 let manchaTotal = (d.Mancha_Leve || 0) + (d.Mancha_Fuerte || 0);
                 let frescoColor = !d.Has_Meta ? 'text-slate-400' : (d.Perc_Fresco >= 60 ? 'text-emerald-700 font-bold' : (d.Perc_Fresco >= 46 ? 'text-amber-700 font-bold' : 'text-rose-700 font-bold'));
@@ -2203,7 +2177,7 @@
                     <td class="font-bold text-slate-800">${d.Camaronera_Oficial}</td>
                     <td class="font-medium text-slate-600">${d.Piscina || '-'}</td>
                     <td>${cosechaBadge}</td>
-                    <td class="font-mono text-xs text-slate-600">${d.Fecha_Recepcion_Display !== '-' ? d.Fecha_Recepcion_Display : d.Fecha_Display}</td>
+                    <td class="font-mono text-xs text-slate-600">${d.Fecha_Display}</td>
                     <td>${horaLlegBadge}</td>
                     <td class="font-mono text-xs text-slate-700 font-medium">${d.Hora_Proceso_Display}</td>
                     <td>${esperaBadge}</td>
@@ -2316,7 +2290,6 @@
                     }
                 }
 
-                // Solo agrupar fechas operativas válidas (2024-2027) para evitar ejes con años erróneos
                 if (d.Fecha_ISO && d.Fecha_ISO.length === 10) {
                     let yr = parseInt(d.Fecha_ISO.substring(0, 4), 10);
                     if (isValidOperationalYear(yr)) {
