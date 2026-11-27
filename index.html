@@ -472,7 +472,7 @@
             renderDashboard(); 
         }
 
-        let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], recepcion: [], consolidado: [] };
+        let db = { liquidaciones: [], sabores: [], metabisulfito: [], branquias: [], recepcion: [], consolidado: [], lotesRecepcionSet: new Set() };
         let charts = {};
         let selectedScatterLote = null;
 
@@ -915,11 +915,14 @@
                 
                 let lotesMap = new Map();
                 let camaronerasSet = new Set();
+                db.lotesRecepcionSet = new Set();
 
                 const createEmptyLote = (lote) => ({
                     Lote: lote,
                     Fecha_ISO: "",
                     Fecha_Display: "-",
+                    Fecha_Recepcion_ISO: "",
+                    Fecha_Recepcion_Display: "-",
                     Tipo_MP: "",
                     Camaronera_Original_Omi: "",
                     Piscina_Omi: "",
@@ -1158,6 +1161,8 @@
 
                         if (statusPesca === 'CANCELADO' && totalRecibido === 0) return;
 
+                        db.lotesRecepcionSet.add(lote);
+
                         if (!lotesMap.has(lote)) {
                             let newL = createEmptyLote(lote);
                             newL.Libras_Recibidas = totalRecibido;
@@ -1211,12 +1216,16 @@
 
                         if (convoys.length > 0) {
                             let dtFirstConv = convoys[0].dtLlegada;
+                            let yyyy = dtFirstConv.getFullYear();
+                            let mm = String(dtFirstConv.getMonth() + 1).padStart(2, '0');
+                            let dd = String(dtFirstConv.getDate()).padStart(2, '0');
+
+                            l.Fecha_Recepcion_ISO = `${yyyy}-${mm}-${dd}`;
+                            l.Fecha_Recepcion_Display = `${dd}/${mm}/${yyyy}`;
+
                             if (!l.Fecha_ISO) {
-                                let yyyy = dtFirstConv.getFullYear();
-                                let mm = String(dtFirstConv.getMonth() + 1).padStart(2, '0');
-                                let dd = String(dtFirstConv.getDate()).padStart(2, '0');
-                                l.Fecha_ISO = `${yyyy}-${mm}-${dd}`;
-                                l.Fecha_Display = `${dd}/${mm}/${yyyy}`;
+                                l.Fecha_ISO = l.Fecha_Recepcion_ISO;
+                                l.Fecha_Display = l.Fecha_Recepcion_Display;
                             }
 
                             let lbsDia = parseNum(getVal(row, ['LBS DIA']));
@@ -1448,7 +1457,7 @@
                     document.getElementById('tbody-calor').innerHTML = '<tr><td colspan="20" class="text-center py-8 text-slate-500 font-semibold">No hay lotes que coincidan con los filtros seleccionados.</td></tr>';
                     document.getElementById('tbody-ranking').innerHTML = '';
                     document.getElementById('tbody-ranking-sabores').innerHTML = '';
-                    document.getElementById('tbody-recep-lotes').innerHTML = '';
+                    renderTiemposRecepcionTab(db.consolidado);
                     return; 
                 }
                 
@@ -1694,7 +1703,7 @@
                 renderSaboresTab(data, activePlugins);
 
                 // --- PESTAÑA 5: TIEMPOS DE ESPERA FIFO Y CALIDAD DE RECEPCIÓN ---
-                renderTiemposRecepcionTab(data);
+                renderTiemposRecepcionTab(db.consolidado);
 
             } catch(error) {
                 console.error("Error en renderDashboard:", error);
@@ -1732,17 +1741,30 @@
             if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
 
-        function renderTiemposRecepcionTab(data) {
+        function renderTiemposRecepcionTab(allData) {
+            let filterCam = document.getElementById('filterCamaronera').value;
+            let filterClase = document.getElementById('filterClase').value;
+            let fDesde = document.getElementById('filterFechaDesde').value;
+            let fHasta = document.getElementById('filterFechaHasta').value;
             let turnoFilter = document.getElementById('filterTurnoRecep') ? document.getElementById('filterTurnoRecep').value : 'ALL';
             let flujoFilter = document.getElementById('filterFlujoRecep') ? document.getElementById('filterFlujoRecep').value : 'ALL';
 
-            let lotesTab5 = data.filter(d => {
-                if (!d.Has_Meta && !d.Has_Recepcion) return false;
-                if (turnoFilter !== 'ALL') {
-                    if (!d.Has_Recepcion || d.Turno_Llegada !== turnoFilter) return false;
+            let lotesTab5 = allData.filter(d => {
+                // Exigencia estricta: el lote debe existir en INFROMACION RECEPCION.csv
+                if (!d.Has_Recepcion || !db.lotesRecepcionSet.has(d.Lote)) return false;
+
+                if (filterCam !== 'ALL' && d.Camaronera_Oficial !== filterCam) return false;
+                if (filterClase !== 'ALL' && d.Clase_Valida !== filterClase) return false;
+
+                let fechaRef = d.Fecha_Recepcion_ISO || d.Fecha_ISO;
+                if (fDesde || fHasta) {
+                    if (!fechaRef) return false;
+                    if (fDesde && fechaRef < fDesde) return false;
+                    if (fHasta && fechaRef > fHasta) return false;
                 }
+
+                if (turnoFilter !== 'ALL' && d.Turno_Llegada !== turnoFilter) return false;
                 if (flujoFilter !== 'ALL') {
-                    if (!d.Has_Recepcion) return false;
                     if (flujoFilter === 'DIRECTO' && d.Es_Fraccionado) return false;
                     if (flujoFilter === 'FRACCIONADO' && !d.Es_Fraccionado) return false;
                 }
@@ -2124,7 +2146,9 @@
 
             // 5. TABLA: Monitoreo Recepción FIFO y Defectos por Lote
             let lotesOrdenados = [...lotesTab5].sort((a, b) => {
-                if (a.Fecha_ISO !== b.Fecha_ISO) return b.Fecha_ISO.localeCompare(a.Fecha_ISO);
+                let fa = a.Fecha_Recepcion_ISO || a.Fecha_ISO;
+                let fb = b.Fecha_Recepcion_ISO || b.Fecha_ISO;
+                if (fa !== fb) return fb.localeCompare(fa);
                 return b.Lote.localeCompare(a.Lote);
             });
 
@@ -2179,7 +2203,7 @@
                     <td class="font-bold text-slate-800">${d.Camaronera_Oficial}</td>
                     <td class="font-medium text-slate-600">${d.Piscina || '-'}</td>
                     <td>${cosechaBadge}</td>
-                    <td class="font-mono text-xs text-slate-600">${d.Fecha_Display}</td>
+                    <td class="font-mono text-xs text-slate-600">${d.Fecha_Recepcion_Display !== '-' ? d.Fecha_Recepcion_Display : d.Fecha_Display}</td>
                     <td>${horaLlegBadge}</td>
                     <td class="font-mono text-xs text-slate-700 font-medium">${d.Hora_Proceso_Display}</td>
                     <td>${esperaBadge}</td>
